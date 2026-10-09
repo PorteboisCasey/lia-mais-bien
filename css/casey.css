@@ -1,0 +1,8 @@
+/* Casey : taille et rendu uniquement. Le positionnement dans la page appartient à l'intégration. */
+svg.casey {
+  display: block;
+  width: var(--casey-size, 72px);
+  height: auto;
+  overflow: visible; /* bras levés, saut et éclats dépassent du viewBox */
+  shape-rendering: geometricPrecision;
+}

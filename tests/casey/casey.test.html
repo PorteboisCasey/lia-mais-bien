@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Tests mascotte (C2)</title>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script defer src="../../js/casey.js"></script>
+</head>
+<body>
+<div id="host" style="width:120px"></div>
+<pre id="result"></pre>
+<p id="step"></p>
+<script>
+/* Une seule page, deux passes : la page lit elle-même prefers-reduced-motion.
+   run.sh la lance une fois normalement, une fois avec --force-prefers-reduced-motion. */
+window.addEventListener('load', async function () {
+  var fails = [];
+  function ok(cond, msg) { document.getElementById('step').textContent = msg; if (!cond) fails.push(msg); }
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  // Résout true si p se résout avant ms, false sinon.
+  function within(p, ms) {
+    return Promise.race([p.then(function () { return true; }), wait(ms).then(function () { return false; })]);
+  }
+  function matrix(el) {
+    var t = el.transform.baseVal.consolidate();
+    return t ? t.matrix : { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+  }
+  function same(m1, m2) {
+    return ['a', 'b', 'c', 'd', 'e', 'f'].every(function (k) { return Math.abs(m1[k] - m2[k]) < 1e-3; });
+  }
+  function shown(el) {
+    var cs = getComputedStyle(el);
+    return cs.visibility !== 'hidden' && cs.display !== 'none' && parseFloat(cs.opacity) > 0.9;
+  }
+
+  // Chrome headless en temps virtuel (--virtual-time-budget) ne déclenche pas
+  // requestAnimationFrame : on cadence le ticker de GSAP à la main, via setInterval
+  // (que le temps virtuel fait avancer), sans lissage du retard.
+  gsap.ticker.lagSmoothing(0);
+  setInterval(function () { gsap.ticker.tick(); }, 16);
+  try {
+    var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var C = window.Casey;
+    var host = document.getElementById('host');
+    var svg = C.mount(host);
+    C.mount(host);
+    ok(host.querySelectorAll('svg').length === 1, 'mount ×2 doit produire un seul SVG');
+    var part = function (p) { return svg.querySelector('[data-part="' + p + '"]'); };
+    var armR = part('armR');
+    ok(armR, 'armR absent');
+    ok(part('eyes') && part('mouth'), 'head doit contenir eyes et mouth');
+
+    if (!reduced) {
+      // Chaque pose résout sa Promise et pose data-pose.
+      for (var i = 0; i < C.POSES.length; i++) {
+        var p = C.POSES[i];
+        ok(await within(C.pose(p, { duration: 0.1 }), 2000), "pose('" + p + "') ne se résout pas");
+        ok(svg.getAttribute('data-pose') === p, "data-pose devrait valoir " + p);
+      }
+
+      // Transition réelle : l'état ne saute pas d'un coup.
+      await C.pose('idle', { duration: 0 });
+      var m0 = matrix(armR);
+      var pPoint = C.pose('point', { duration: 0.4 });
+      ok(same(matrix(armR), m0), 'pose avec duration > 0 ne doit pas sauter à la cible');
+      await pPoint;
+      ok(!same(matrix(armR), m0), "pose('point') doit bouger armR");
+
+      // Dernier appel gagnant.
+      var first = C.pose('wave');
+      var second = C.pose('think');
+      ok(await within(first, 100), 'la 1re Promise doit se résoudre dès le 2e appel');
+      ok(await within(second, 2000), 'la 2e Promise doit se résoudre');
+      ok(svg.getAttribute('data-pose') === 'think', 'dernier appel gagnant : think attendu');
+
+      // Marche par-dessus la pose.
+      C.walk(0.5);
+      ok(svg.getAttribute('data-walking') === 'true', 'walk(0.5) doit poser data-walking');
+      ok(svg.getAttribute('data-pose') === 'think', 'walk ne doit pas changer data-pose');
+      await wait(400);
+      var swing = svg.querySelector('[data-part="legL"] > .swing');
+      ok(swing && !same(matrix(swing), { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }), 'la jambe doit bouger pendant la marche');
+      C.walk(0);
+      ok(!svg.hasAttribute('data-walking'), 'walk(0) doit retirer data-walking');
+      ok(svg.getAttribute('data-pose') === 'think', 'walk(0) garde la pose demandée');
+      await wait(500);
+      ok(same(matrix(swing), { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }), 'walk(0) doit ramener la jambe au repos');
+
+      // Bornes.
+      C.walk(2);
+      ok(svg.getAttribute('data-walk-speed') === '1', 'walk(2) doit être borné à 1');
+      C.walk(-1);
+      ok(svg.getAttribute('data-walk-speed') === '0', 'walk(-1) doit être borné à 0');
+      ok(!svg.hasAttribute('data-walking'), 'walk(-1) équivaut à walk(0)');
+
+      // face.
+      var flip = svg.querySelector('.casey-flip');
+      C.face('left');
+      await wait(400);
+      ok(flip && matrix(flip).a < 0, "face('left') doit inverser l'axe X");
+      C.face('right');
+      await wait(400);
+      ok(flip && matrix(flip).a > 0, "face('right') doit rétablir l'axe X");
+
+      // Fête + pose pendant la fête.
+      await C.pose('idle', { duration: 0 });
+      var t0 = performance.now();
+      var party = C.celebrate();
+      await wait(500);
+      ok(shown(svg.querySelector('.sparks')), 'les éclats doivent être visibles pendant la fête');
+      var pPhone = C.pose('phone');
+      ok(svg.getAttribute('data-pose') === 'phone', 'pose() pendant la fête met à jour data-pose');
+      ok(await within(party, 3000), 'celebrate() doit se résoudre');
+      ok(performance.now() - t0 > 1000, 'la fête doit durer environ 1,2 s');
+      ok(await within(pPhone, 1000), 'la Promise de pose() pendant la fête doit se résoudre');
+      ok(svg.getAttribute('data-pose') === 'phone', 'après la fête, data-pose vaut phone');
+      ok(shown(part('phone')), 'après la fête, le téléphone est visible');
+      ok(!shown(svg.querySelector('.sparks')), 'après la fête, les éclats sont masqués');
+    } else {
+      // Reduced motion : pas de transition.
+      await C.pose('idle');
+      var r0 = matrix(armR);
+      var rp = C.pose('point', { duration: 2 });
+      var r1 = matrix(armR);
+      ok(!same(r1, r0), 'reduced-motion : pose doit s\'appliquer immédiatement');
+      ok(await within(rp, 100), 'reduced-motion : la Promise doit se résoudre aussitôt');
+      ok(same(matrix(armR), r1), 'reduced-motion : rien ne bouge après coup');
+      ok(svg.getAttribute('data-pose') === 'point', 'reduced-motion : data-pose = point');
+
+      // walk ne fait rien.
+      C.walk(0.5);
+      ok(!svg.hasAttribute('data-walking'), 'reduced-motion : walk ne pose pas data-walking');
+      await wait(400);
+      var sw = svg.querySelector('[data-part="legL"] > .swing');
+      ok(sw && same(matrix(sw), { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }), 'reduced-motion : les jambes restent immobiles');
+
+      // Pas de boucle en idle.
+      await C.pose('idle');
+      var torso = part('torso');
+      var t1 = matrix(torso);
+      await wait(700);
+      ok(same(matrix(torso), t1), 'reduced-motion : pas de respiration en boucle');
+
+      // celebrate sans transition, résolue.
+      var rc = C.celebrate();
+      ok(shown(svg.querySelector('.sparks')), 'reduced-motion : party appliquée immédiatement');
+      ok(await within(rc, 3000), 'reduced-motion : celebrate doit se résoudre');
+      ok(svg.getAttribute('data-pose') === 'idle', 'reduced-motion : retour à idle');
+    }
+  } catch (e) {
+    fails.push('exception : ' + (e && e.stack || e));
+  }
+  document.getElementById('result').textContent = fails.length ? fails.join('\n') : 'OK';
+});
+</script>
+</body>
+</html>

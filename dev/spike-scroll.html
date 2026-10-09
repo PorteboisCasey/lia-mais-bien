@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Casey · spike scroll</title>
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/casey.css">
+<script>
+  // ?auto : Chrome headless en temps virtuel ne déclenche pas requestAnimationFrame,
+  // dont dépendent le ticker de GSAP et le traitement du scroll de ScrollTrigger.
+  // On le remplace par setTimeout (que le temps virtuel fait avancer) avant leur chargement.
+  if (/[?&]auto\b/.test(location.search)) {
+    window.requestAnimationFrame = function (cb) { return setTimeout(function () { cb(performance.now()); }, 16); };
+    window.cancelAnimationFrame = clearTimeout;
+  }
+</script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script defer src="../js/casey.js"></script>
+<style>
+  /* Spike : vérifier que les règles C2 se pilotent depuis un scroll scrub + getVelocity().
+     ?auto : scénario de scroll automatique, constats écrits dans <pre id="result">. */
+  body { margin: 0; font-family: var(--font-body); color: var(--ink); background: var(--paper); }
+  section { min-height: 110vh; padding: 40px 16px; border-bottom: 3px dashed var(--ink); }
+  h2 { font-family: var(--font-display); font-weight: 400; font-size: 2rem; margin: 0; }
+  #runner { position: fixed; left: 16px; bottom: 12px; z-index: 2; }
+  #runner .casey { --casey-size: 72px; }
+  #hud { position: fixed; top: 8px; right: 8px; z-index: 3; margin: 0; padding: 8px; background: #fff; border: 2px solid var(--ink); font-size: 12px; }
+  #result { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<section data-pose="sit"><h2>hero · sit</h2></section>
+<section data-pose="point"><h2>apprendre · point</h2></section>
+<section data-pose="idle"><h2>infos · idle</h2></section>
+<section data-pose="wave"><h2>moi · wave</h2></section>
+<section data-pose="think"><h2>faq · think</h2></section>
+<section data-pose="phone"><h2>question · phone</h2><button id="party" type="button">celebrate()</button></section>
+<div id="runner"></div>
+<pre id="hud"></pre>
+<pre id="result"></pre>
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  var auto = new URLSearchParams(location.search).has('auto');
+  if (auto) gsap.ticker.lagSmoothing(0);
+  gsap.registerPlugin(ScrollTrigger);
+  var svg = Casey.mount(document.getElementById('runner'));
+  var stats = { walkCalls: 0, poseCalls: 0, poseResolved: 0 };
+
+  // Pose par section : onToggle, en entrant dans la section active.
+  document.querySelectorAll('section').forEach(function (sec) {
+    ScrollTrigger.create({
+      trigger: sec, start: 'top center', end: 'bottom center',
+      onToggle: function (st) {
+        if (!st.isActive) return;
+        stats.poseCalls++;
+        Casey.pose(sec.dataset.pose).then(function () { stats.poseResolved++; });
+      }
+    });
+  });
+
+  // Déplacement : un tween scrubé (la position appartient à la chorégraphie, pas à casey.js).
+  gsap.to('#runner', {
+    x: function () { return innerWidth - 120; }, ease: 'none',
+    scrollTrigger: { start: 0, end: 'max', scrub: true, invalidateOnRefresh: true }
+  });
+
+  // Marche : vitesse de scroll → walk(), sens → face(), arrêt après 300 ms sans scroll.
+  var stopTimer = null;
+  ScrollTrigger.create({
+    start: 0, end: 'max',
+    onUpdate: function (st) {
+      var v = Math.abs(st.getVelocity());          // px/s
+      stats.walkCalls++;
+      Casey.walk(Math.min(1, v / 1500));
+      Casey.face(st.direction < 0 ? 'left' : 'right');
+      clearTimeout(stopTimer);
+      stopTimer = setTimeout(function () { Casey.walk(0); }, 300);
+    }
+  });
+
+  document.getElementById('party').addEventListener('click', function () { Casey.celebrate(); });
+
+  var hud = document.getElementById('hud');
+  setInterval(function () {
+    hud.textContent = 'pose ' + svg.getAttribute('data-pose') + '\nwalking ' + (svg.getAttribute('data-walking') || '–') +
+      '\nspeed ' + svg.getAttribute('data-walk-speed') + '\nface ' + svg.getAttribute('data-face');
+  }, 100);
+
+  if (auto) runScenario(svg, stats);
+});
+
+async function runScenario(svg, stats) {
+  var log = [], fails = [];
+  function ok(c, m) { log.push((c ? '✓ ' : '✗ ') + m); if (!c) fails.push(m); }
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function attr(n) { return svg.getAttribute(n); }
+  var secs = document.querySelectorAll('section');
+  function top(i) { return secs[i].offsetTop - innerHeight / 2 + 40; }
+  // En temps virtuel, scrollTo ne déclenche pas d'événement scroll (il part avec les frames) : on l'émet.
+  function go(y) { scrollTo(0, y); document.dispatchEvent(new Event('scroll')); }
+  // Scroll « doux » de y0 à y1 en ms millisecondes, par pas de 16 ms.
+  async function glide(y1, ms) {
+    var y0 = scrollY, n = Math.max(1, Math.round(ms / 16));
+    for (var i = 1; i <= n; i++) { go(y0 + (y1 - y0) * i / n); await wait(16); }
+  }
+
+  await wait(300);
+  ok(attr('data-pose') === 'sit', 'au chargement, la section hero donne sit (' + attr('data-pose') + ')');
+
+  // 1. Scroll doux vers la section 3 : la marche passe par-dessus les poses traversées.
+  var sawWalking = false, poseDuringWalk = new Set();
+  var probe = setInterval(function () {
+    if (attr('data-walking') === 'true') { sawWalking = true; poseDuringWalk.add(attr('data-pose')); }
+  }, 16);
+  await glide(top(2), 1200);
+  clearInterval(probe);
+  ok(sawWalking, 'scroll doux : data-walking passe à true');
+  ok(poseDuringWalk.size >= 2, 'pendant la marche, data-pose suit les sections traversées : ' + Array.from(poseDuringWalk).join(','));
+  ok(attr('data-face') === 'right', 'scroll vers le bas : face right');
+  await wait(400);
+  ok(!svg.hasAttribute('data-walking'), 'arrêt du scroll + 300 ms : la marche s\'arrête');
+  ok(attr('data-pose') === 'idle', 'section infos : idle (' + attr('data-pose') + ')');
+
+  // 2. Lancer brutal jusqu'à la fin : plusieurs pose() en rafale, le dernier gagne.
+  var before = stats.poseCalls;
+  for (var y = scrollY; y < top(5); y += 900) { go(y); await wait(16); }
+  go(top(5));
+  await wait(900);
+  ok(stats.poseCalls - before >= 3, 'lancer : ' + (stats.poseCalls - before) + ' pose() en rafale');
+  ok(attr('data-pose') === 'phone', 'lancer : la dernière section gagne (phone)');
+  ok(stats.poseResolved === stats.poseCalls, 'toutes les Promises de pose() sont résolues (' + stats.poseResolved + '/' + stats.poseCalls + ')');
+
+  // 3. Remonter : face left.
+  await glide(top(4), 500);
+  ok(attr('data-face') === 'left', 'scroll vers le haut : face left');
+  ok(attr('data-pose') === 'think', 'remontée dans la FAQ : think');
+  await wait(400);
+
+  // 4. Fête, puis scroll pendant la fête : la fête n'est pas coupée, retour à la pose de la section.
+  go(top(5)); await wait(400);
+  var t0 = performance.now();
+  var party = Casey.celebrate();
+  await wait(200);
+  await glide(top(4), 300);
+  var sparksShown = getComputedStyle(svg.querySelector('.sparks')).visibility === 'visible';
+  ok(sparksShown, 'scroll pendant la fête : la fête continue (éclats visibles)');
+  await party;
+  ok(performance.now() - t0 > 1100, 'la fête dure ~1,2 s malgré le scroll');
+  ok(attr('data-pose') === 'think', 'après la fête : pose de la section courante (think)');
+
+  log.push('· ' + stats.walkCalls + ' appels à walk() pendant le scénario');
+
+  document.getElementById('result').textContent = (fails.length ? fails.join('\n') : 'OK') + '\n\n' + log.join('\n');
+}
+</script>
+</body>
+</html>

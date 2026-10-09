@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Casey · démo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Gochi+Hand&family=Lilita+One&display=swap">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/casey.css">
+<script>
+  /* Ce Mac (et peut-être le tien) a « Réduire les animations » activé : Casey resterait figé.
+     La démo peut ignorer ce réglage. Casey relit matchMedia à chaque appel, donc la bascule est immédiate. */
+  (function () {
+    var real = window.matchMedia.bind(window);
+    var params = new URLSearchParams(location.search);
+    window.__forceMotion = params.get('motion') !== 'system';
+    window.matchMedia = function (q) {
+      if (window.__forceMotion && /prefers-reduced-motion/.test(q)) {
+        return { matches: false, media: q, addEventListener: function () {}, removeEventListener: function () {} };
+      }
+      return real(q);
+    };
+    window.__systemReduced = real('(prefers-reduced-motion: reduce)').matches;
+  })();
+</script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script defer src="../js/casey.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+  }
+  main { max-width: 900px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-family: var(--font-display); font-weight: 400; font-size: 2.4rem; margin: 0 0 4px; }
+  h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.5rem; margin: 40px 0 12px; }
+  .hint { margin: 0 0 20px; font-family: var(--font-hand); font-size: 1.3rem; }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+  @media (max-width: 700px) { .layout { grid-template-columns: 1fr; } }
+  .stage {
+    display: grid;
+    place-items: center;
+    min-height: 380px;
+    border: calc(var(--line) * 1.5) solid var(--ink);
+    border-radius: 28px;
+    box-shadow: 6px 6px 0 var(--ink);
+    padding: 60px 20px 30px;
+  }
+  .stage .casey { --casey-size: 200px; }
+  .panel { display: grid; gap: 18px; }
+  .poses { display: flex; flex-wrap: wrap; gap: 10px; }
+  button {
+    min-height: var(--tap);
+    padding: 8px 14px;
+    border: var(--line) solid var(--ink);
+    border-radius: var(--radius);
+    background: var(--paper);
+    box-shadow: 3px 3px 0 var(--ink);
+    font: 800 1rem var(--font-body);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+  button[aria-pressed="true"] { background: var(--accent); }
+  .party-btn { background: var(--accent); font-family: var(--font-display); font-weight: 400; font-size: 1.2rem; }
+  label { display: grid; gap: 6px; font-weight: 700; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .motion-toggle { display: flex; gap: 10px; align-items: center; font-weight: 600; }
+  .motion-toggle input { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
+  .motion-toggle span { flex: 1; min-width: 0; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  #state { margin: 0; padding: 10px 12px; border: 2px dashed var(--ink); border-radius: 10px; font-size: .9rem; }
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+  .gallery figure { margin: 0; border: var(--line) solid var(--ink); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .gallery iframe { display: block; width: 100%; height: 190px; border: 0; }
+  .gallery figcaption { padding: 4px 0 8px; text-align: center; font-family: var(--font-hand); font-size: 1.3rem; }
+
+  /* Mode vignette (?solo) : Casey seul, pour la galerie et les captures. */
+  body.solo main { display: none; }
+  body.solo #solo { display: grid; place-items: center; height: 100vh; padding-top: 30px; }
+  #solo { display: none; }
+  #solo .casey { --casey-size: min(60vh, 70vw); }
+</style>
+</head>
+<body>
+<div id="solo"></div>
+<main>
+  <h1>Casey</h1>
+  <p class="hint">Démo de la mascotte : poses, marche, orientation et fête.</p>
+
+  <div class="layout">
+    <div class="stage" id="stage"></div>
+    <div class="panel">
+      <div class="poses" id="poses" role="group" aria-label="Poses"></div>
+      <label>Marche : <span id="speed-out">0</span>
+        <input id="speed" type="range" min="0" max="1" step="0.01" value="0">
+      </label>
+      <div class="row">
+        <button id="face" type="button">Se retourner</button>
+        <button id="party" type="button" class="party-btn">celebrate()</button>
+      </div>
+      <label class="motion-toggle"><input id="force" type="checkbox"><span>Ignorer « Réduire les animations » du système</span></label>
+      <pre id="state"></pre>
+    </div>
+  </div>
+
+  <h2>Les 8 poses</h2>
+  <div class="gallery" id="gallery"></div>
+</main>
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  var params = new URLSearchParams(location.search);
+
+  if (params.has('solo')) {
+    document.body.classList.add('solo');
+    // Captures headless : sans rAF en temps virtuel, on cadence GSAP à la main.
+    if (params.has('tick')) { gsap.ticker.lagSmoothing(0); setInterval(function () { gsap.ticker.tick(); }, 16); }
+    Casey.mount(document.getElementById('solo'));
+    Casey.pose(params.get('pose') || 'idle', { duration: 0 });
+    if (params.get('face') === 'left') Casey.face('left');
+    if (params.has('walk')) Casey.walk(parseFloat(params.get('walk')));
+    return;
+  }
+
+  var svg = Casey.mount(document.getElementById('stage'));
+  var buttons = {};
+  Casey.POSES.forEach(function (p) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = p;
+    b.addEventListener('click', function () { Casey.pose(p); });
+    document.getElementById('poses').appendChild(b);
+    buttons[p] = b;
+
+    var fig = document.createElement('figure');
+    fig.innerHTML = '<iframe loading="lazy" title="Casey en pose ' + p + '" src="casey.html?solo&pose=' + p + '"></iframe><figcaption>' + p + '</figcaption>';
+    document.getElementById('gallery').appendChild(fig);
+  });
+
+  var speed = document.getElementById('speed');
+  speed.addEventListener('input', function () {
+    document.getElementById('speed-out').textContent = speed.value;
+    Casey.walk(parseFloat(speed.value));
+  });
+
+  document.getElementById('face').addEventListener('click', function () {
+    Casey.face(svg.getAttribute('data-face') === 'left' ? 'right' : 'left');
+  });
+  document.getElementById('party').addEventListener('click', function () { Casey.celebrate(); });
+
+  var force = document.getElementById('force');
+  force.checked = window.__forceMotion;
+  force.addEventListener('change', function () {
+    window.__forceMotion = force.checked;
+    Casey.pose(svg.getAttribute('data-pose'));
+  });
+
+  // État courant, lu sur les attributs du SVG.
+  var out = document.getElementById('state');
+  function render() {
+    var p = svg.getAttribute('data-pose');
+    Object.keys(buttons).forEach(function (k) { buttons[k].setAttribute('aria-pressed', String(k === p)); });
+    out.textContent =
+      'data-pose     ' + p + '\n' +
+      'data-walking  ' + (svg.getAttribute('data-walking') || '–') + '\n' +
+      'data-face     ' + svg.getAttribute('data-face') + '\n' +
+      'réduire anim. ' + (window.__systemReduced ? 'oui (système)' : 'non') + (window.__forceMotion ? ', ignoré' : '');
+  }
+  new MutationObserver(render).observe(svg, { attributes: true });
+  render();
+  Casey.pose('idle', { duration: 0 });
+});
+</script>
+</body>
+</html>
