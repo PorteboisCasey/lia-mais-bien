@@ -13,7 +13,7 @@ statut: terminé
 ## Tests
 - `bash tests/run.sh` → « Tout est vert. » (`test_decors.py` inclus, choreo normal et reduced-motion).
 - `tests/choreo/capture.sh` : Casey hors colonne (desktop) et dans `#stage` (mobile), `scrollWidth == clientWidth` à 375 et 1440.
-- Lighthouse mobile (`npx -y lighthouse http://localhost:8004/ --form-factor=mobile …`) : performance 92, accessibilité 100 (avant le chantier : 92 / 100). LCP 2,8 s (avant : 2,7 s).
+- Lighthouse mobile (`npx -y lighthouse http://localhost:8024/ --form-factor=mobile …`) : performance 92, accessibilité 100, LCP 2,7 s, identiques à avant le chantier. Port 8024 et non 8004 : le 8004 était déjà occupé par un `http.server` d'une autre session, qui sert `.worktrees/feat-marche-fixe`. Une première mesure l'a visé par erreur ; elle a été écartée.
 - Hauteur de page à 375 px (`scrollHeight`) : 2784 px avant, 3366 px après (+21 %).
 - Captures (scratchpad, hors dépôt) : `/private/tmp/claude-501/-Users-postg0d-Desktop-cours/af3842bc-451c-42aa-91a8-a88f041dfa33/scratchpad/revue/` (`apprendre-375[-nocard].png`, `apprendre-1440[-nocard].png`, `page-sans-js-375.png`).
 
@@ -24,7 +24,8 @@ Aucune.
 - `tests/choreo/choreo.test.html` (1 ligne + commentaire) : le test « face() s'inverse » scrollait de `apprendre.offsetTop + 20` à `+ 80` et supposait qu'aucune frontière de segment ne tombait dans cette fenêtre. Avec les sections plus hautes, la frontière d'`infos` y tombait (71 px sur mobile, 62 px sur desktop). La fenêtre est désormais centrée entre `vp.stops[1]` et `vp.stops[2]`. Modification autorisée par l'humain et appliquée par lui (le hook de périmètre bloquait l'agent).
 
 ## Vigilance
-- **LCP** : l'élément LCP n'est plus le `h1` mais le fond de `#apprendre` (une bande de 375 × 160 px est plus grande que le bloc du titre ; les stubs y échappent car Chrome ignore les images de très faible entropie). Le temps ne bouge presque pas (2,7 → 2,8 s). Dès que le hero sera dessiné, son décor sera le LCP. Proposition faite à l'humain : remplacer le critère « LCP = `h1` » par « LCP pas plus lent qu'avant et performance ≥ 90 ». Il a répondu « oui » sans préciser s'il validait ce point : à confirmer par l'orchestrateur.
+- **LCP** : l'élément LCP n'est plus le `h1` mais le fond de `#apprendre` (une bande de 375 × 160 px est plus grande que le bloc du titre ; les stubs y échappent car Chrome ignore les images de très faible entropie). Le temps ne bouge pas (2,7 s avant comme après). Dès que le hero sera dessiné, son décor sera le LCP. Proposition faite à l'humain : remplacer le critère « LCP = `h1` » par « LCP pas plus lent qu'avant et performance ≥ 90 ». Il a répondu « oui » sans préciser s'il validait ce point : à confirmer par l'orchestrateur.
+- Le port 8004 est pris par un serveur d'une autre session (worktree `feat-marche-fixe`) : vérifier `lsof -iTCP:<port>` avant de mesurer.
 - Sur desktop, la carte couvre x 504 à 1096 dès y = 120 (haut) et jusqu'à y = 80 (bas) : l'essentiel doit rester dans la zone `N`/`M`, les bords sont visibles en entier.
 - Une carte opaque cache le centre des bandes : vérifier chaque scène avec `tools/capture-decors.sh <dossier> <id>` et sa variante `-nocard`.
 - Le générateur de la scène `apprendre` (lettres à la craie en chemins entiers) est resté dans le scratchpad. La police de craie (L, I, R, E, T, S, V, É, F sur une grille 12 × 20) peut servir de modèle si une autre scène a besoin de lettres.
