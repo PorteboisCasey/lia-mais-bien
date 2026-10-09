@@ -72,11 +72,11 @@
       mouth: { scaleX: 0.55, scaleY: 0.35 }
     },
     phone: {
-      R: [[30, 41], [32, 31]], phone: { autoAlpha: 1 },
+      R: [[31.5, 40.5], [36, 31.5]], phone: { autoAlpha: 1 },
       head: { rotation: 6, y: 0 }, eyes: { x: 1.4, y: 1, scaleY: 1 }
     },
     party: {
-      L: [[2, 25], [-1, 17]], R: [[29, 25], [32, 17]],
+      L: [[0, 27], [-7, 21]], R: [[31, 28], [38, 21]],
       tablet: { autoAlpha: 0 }, head: { rotation: 0, y: -1 },
       eyes: { x: 0, y: 0, scaleY: 0.55 }, smile: { autoAlpha: 0 }, open: { autoAlpha: 1 },
       sparks: { autoAlpha: 1, scale: 1 }
@@ -105,7 +105,7 @@
     ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
     '<g class="casey-flip"><g class="casey-jump"><g class="casey-bob">' +
     '<g data-part="legL"><g class="swing"><path d="M10 54 V68" stroke-width="4.2"/>' +
-      '<g class="foot"><ellipse cx="7" cy="70.5" rx="6.5" ry="3.4" fill="#111"/></g></g></g>' +
+      '<g class="foot"><g class="stride"><ellipse cx="7" cy="70.5" rx="6.5" ry="3.4" fill="#111"/></g></g></g></g>' +
     '<g data-part="legR"><g class="swing"><path d="M20 54 V68" stroke-width="4.2"/>' +
       '<ellipse cx="24" cy="70.5" rx="6.5" ry="3.4" fill="#111"/></g></g>' +
     '<g data-part="torso"><rect x="5" y="29" width="20" height="21" rx="3" fill="#FF4D00"/>' +
@@ -162,6 +162,7 @@
     legL: ['[data-part="legL"]', '10 54'],
     swingLegL: ['[data-part="legL"] > .swing', '10 54'],
     footL: ['[data-part="legL"] .foot', '10 70.5'],
+    stride: ['[data-part="legL"] .stride', '10 70.5'],
     legR: ['[data-part="legR"]', '20 54'],
     swingLegR: ['[data-part="legR"] > .swing', '20 54'],
     tablet: ['.tablet'],
@@ -281,6 +282,7 @@
     var arms = (requested === 'idle' || requested === 'walk') && !celebrating ? 1 : 0;
     if (reduced()) {
       gsap.killTweensOf(W);
+      gsap.set(T.stride, { scaleX: 1, overwrite: true });
       walkTl.pause();
       W.amp = 0;
       W.arms = arms;
@@ -288,6 +290,9 @@
       return;
     }
     var speed = walkSpeed > 0 ? walkSpeed : (requested === 'walk' && !celebrating ? 0.5 : 0);
+    // En marche, le pied gauche (tourné vers l'extérieur au repos) pointe dans le sens de la marche.
+    var stride = speed > 0 ? -PROPS[requested].footL.scaleX : 1;
+    gsap.to(T.stride, { scaleX: stride, duration: 0.2, overwrite: true });
     if (speed > 0) {
       if (walkTl.paused()) walkTl.play();
       gsap.to(walkTl, { timeScale: 0.6 + 1.4 * speed, duration: 0.25, overwrite: true });
