@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Tests chorégraphie</title>
+<style>iframe { display: block; border: 0; }</style>
+</head>
+<body>
+<pre id="result"></pre>
+<p id="step"></p>
+<script>
+/* index.html est chargé en iframe à chaque taille d'écran : on teste Choreo sur la vraie mise en page.
+   Une seule page, deux passes : run.sh la lance normalement puis avec --force-prefers-reduced-motion.
+
+   Temps virtuel (--virtual-time-budget) : Chrome n'y déclenche pas requestAnimationFrame et
+   scrollTo n'émet pas d'événement scroll. On cadence donc le ticker GSAP de l'iframe à la main
+   et on appelle ScrollTrigger.update() après chaque scrollTo. */
+var SIZES = [[1440, 900], [375, 667], [390, 844]];
+var PROGRESS = [0.1, 0.25, 0.5, 0.75, 1];
+var POSES = { hero: 'sit', apprendre: 'point', infos: 'idle', moi: 'wave', faq: 'think', question: 'phone' };
+var STAGE = 96, BUTTON_ZONE = 80;
+
+var fails = [];
+function ok(cond, msg) { document.getElementById('step').textContent = msg; if (!cond) fails.push(msg); }
+function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+function load(w, h) {
+  return new Promise(function (resolve) {
+    var f = document.createElement('iframe');
+    f.style.width = w + 'px';
+    f.style.height = h + 'px';
+    f.onload = function () { resolve(f); };
+    f.src = '../../index.html';
+    document.body.appendChild(f);
+  });
+}
+
+async function checkSize(W, H, reduced) {
+  var tag = W + '×' + H + ' : ';
+  var f = await load(W, H);
+  var win = f.contentWindow, doc = win.document;
+  var ticker = setInterval(function () { win.gsap.ticker.tick(); }, 16);
+  win.gsap.ticker.lagSmoothing(0);
+  await wait(50);
+  var C = win.Choreo, ST = win.ScrollTrigger;
+  ok(C && typeof C.pathAt === 'function' && typeof C.poseFor === 'function' && typeof C.measure === 'function',
+    tag + 'window.Choreo (pathAt, poseFor, measure) absent');
+  if (!C) { clearInterval(ticker); f.remove(); return; }
+  ST.refresh();
+
+  var svg = doc.querySelector('#casey svg.casey');
+  ok(svg, tag + 'Casey doit être monté dans #casey');
+
+  // Le h1 n'est jamais masqué (LCP), ni lui ni ses mots.
+  var h1 = doc.querySelector('h1');
+  [h1].concat([].slice.call(h1.querySelectorAll('.w'))).forEach(function (el) {
+    var cs = win.getComputedStyle(el);
+    ok(cs.opacity === '1' && cs.visibility === 'visible', tag + 'le h1 et ses mots restent visibles (' + el.textContent + ')');
+  });
+
+  // Casey statique de « moi » masqué quand le vrai est monté.
+  ok(win.getComputedStyle(doc.querySelector('.buddy svg')).display === 'none', tag + 'le Casey statique de #moi est masqué');
+
+  // --- pathAt -------------------------------------------------------------
+  var vp = C.measure();
+  var desktop = W >= 1024;
+  var cw = vp.casey.w, ch = vp.casey.h;
+  var col = doc.querySelector('main').getBoundingClientRect();
+  ok(Math.abs(cw - svg.getBoundingClientRect().width) < 1, tag + 'measure().casey.w = largeur réelle de Casey');
+
+  function outsideColumn(r) { return r.x + cw <= col.left + 0.5 || r.x >= col.right - 0.5; }
+  function inStage(r) { return r.y >= H - STAGE - 0.5 && r.y + ch <= H + 0.5 && r.x >= -0.5 && r.x + cw <= W - BUTTON_ZONE + 0.5; }
+  function visible(r) { return r.y + ch > 0 && r.y < H; }
+  function fmt(r) { return '(' + Math.round(r.x) + ', ' + Math.round(r.y) + ')'; }
+
+  PROGRESS.forEach(function (p) {
+    var r = C.pathAt(p, vp);
+    ok(r && isFinite(r.x) && isFinite(r.y) && (r.face === 'left' || r.face === 'right'), tag + 'pathAt(' + p + ') renvoie { x, y, face }');
+    if (desktop) {
+      ok(outsideColumn(r) && r.x >= 0 && r.x + cw <= W, tag + 'pathAt(' + p + ') dans une gouttière ' + fmt(r));
+    } else {
+      ok(inStage(r), tag + 'pathAt(' + p + ') dans #stage, hors des 80 px de droite ' + fmt(r));
+    }
+  });
+
+  // Hero : assis sur #casey-seat (desktop), dans la scène (mobile).
+  var r0 = C.pathAt(0, vp);
+  if (desktop) {
+    var seat = doc.getElementById('casey-seat').getBoundingClientRect();
+    ok(Math.abs(r0.x - seat.left) < 1 && Math.abs(r0.y + ch - seat.top) < 1,
+      tag + 'pathAt(0) assis sur #casey-seat ' + fmt(r0) + ' vs (' + Math.round(seat.left) + ', ' + Math.round(seat.top - ch) + ')');
+  } else {
+    [0, 0.05, 0.09].forEach(function (p) { ok(inStage(C.pathAt(p, vp)), tag + 'hero : pathAt(' + p + ') dans #stage'); });
+  }
+
+  // Tout le trajet : jamais de téléport à l'écran ; hors hero, jamais sur la colonne (desktop) ; toujours dans la scène (mobile).
+  var prev = null, jumps = 0, onColumn = 0, outStage = 0;
+  for (var i = 0; i <= 1000; i++) {
+    var p = i / 1000, r = C.pathAt(p, vp);
+    if (desktop) {
+      if (p >= vp.stops[1] && visible(r) && !outsideColumn(r)) onColumn++;
+    } else if (!inStage(r)) outStage++;
+    if (prev && visible(prev) && visible(r) && Math.hypot(r.x - prev.x, r.y - prev.y) > 40) jumps++;
+    prev = r;
+  }
+  ok(jumps === 0, tag + 'trajet continu à l\'écran (' + jumps + ' sauts)');
+  if (desktop) ok(onColumn === 0, tag + 'hors hero, jamais sur la colonne (' + onColumn + ' points)');
+  else ok(outStage === 0, tag + 'toujours dans #stage (' + outStage + ' points dehors)');
+
+  // --- ScrollTrigger : scrub seulement hors reduced-motion -------------------
+  var scrubs = ST.getAll().filter(function (st) { return st.vars && st.vars.scrub; }).length;
+  if (reduced) ok(scrubs === 0, tag + 'reduced-motion : aucun ScrollTrigger scrub (' + scrubs + ')');
+  else ok(scrubs >= 1, tag + 'un ScrollTrigger scrub pour le trajet');
+
+  // --- Poses par section, dans les deux sens ---------------------------------
+  var ids = Object.keys(POSES);
+  function sectionY(id) { return Math.min(ST.maxScroll(win), doc.getElementById(id).offsetTop - H / 2 + 20); }
+  function go(y) { win.scrollTo(0, y); doc.dispatchEvent(new win.Event('scroll')); ST.update(); }
+  var caseyBox = doc.getElementById('casey');
+  var t0 = caseyBox.style.transform;
+  var sawWalking = false;
+  for (var k = 0; k < ids.length; k++) {
+    // Petits pas, pour que la vitesse de scroll soit mesurable.
+    var y0 = win.scrollY, y1 = Math.max(0, sectionY(ids[k]));
+    for (var s = 1; s <= 6; s++) { go(y0 + (y1 - y0) * s / 6); await wait(16); if (svg.getAttribute('data-walking') === 'true') sawWalking = true; }
+    ok(svg.getAttribute('data-pose') === POSES[ids[k]], tag + 'en descendant, #' + ids[k] + ' → ' + POSES[ids[k]] + ' (' + svg.getAttribute('data-pose') + ')');
+  }
+  if (reduced) {
+    ok(!sawWalking, tag + 'reduced-motion : Casey ne marche pas');
+    ok(caseyBox.style.transform === t0, tag + 'reduced-motion : Casey ne bouge pas au scroll');
+  } else {
+    ok(sawWalking, tag + 'Casey marche pendant le scroll');
+    await wait(600);
+    ok(!svg.hasAttribute('data-walking'), tag + 'Casey s\'arrête ~300 ms après le scroll');
+  }
+  for (k = ids.length - 2; k >= 0; k--) {
+    go(Math.max(0, sectionY(ids[k])));
+    await wait(16);
+    ok(svg.getAttribute('data-pose') === POSES[ids[k]], tag + 'en remontant, #' + ids[k] + ' → ' + POSES[ids[k]] + ' (' + svg.getAttribute('data-pose') + ')');
+  }
+  // face() suit le sens du déplacement : il s'inverse quand on inverse le scroll.
+  if (!reduced) {
+    var mid = doc.getElementById('apprendre').offsetTop + 20;
+    for (s = 1; s <= 4; s++) { go(mid + s * 15); await wait(16); }
+    var faceDown = svg.getAttribute('data-face');
+    for (s = 1; s <= 4; s++) { go(mid + 60 - s * 15); await wait(16); }
+    ok(svg.getAttribute('data-face') !== faceDown, tag + 'face() s\'inverse avec le sens du scroll (' + faceDown + ' → ' + svg.getAttribute('data-face') + ')');
+  }
+
+  // --- Entrées : une fois la page parcourue, tout est dans son état final ----
+  go(ST.maxScroll(win));
+  await wait(1500);
+  doc.querySelectorAll('[data-anim="drop"], [data-anim="pop"]').forEach(function (el) {
+    ok(parseFloat(win.getComputedStyle(el).opacity) > 0.99, tag + 'entrée terminée : ' + el.textContent.trim());
+  });
+  doc.querySelectorAll('.promises [data-anim="draw"]').forEach(function (el, n) {
+    ok(Math.abs(parseFloat(win.getComputedStyle(el).strokeDashoffset) || 0) < 0.01, tag + 'coche ' + (n + 1) + ' dessinée en bas de page');
+  });
+
+  // --- question:sent → Casey.celebrate (espion) ------------------------------
+  var calls = 0, orig = win.Casey.celebrate;
+  win.Casey.celebrate = function () { calls++; return Promise.resolve(); };
+  doc.dispatchEvent(new win.CustomEvent('question:sent'));
+  ok(calls === 1, tag + 'question:sent déclenche Casey.celebrate une fois (' + calls + ')');
+  win.Casey.celebrate = orig;
+
+  clearInterval(ticker);
+  f.remove();
+}
+
+window.addEventListener('load', async function () {
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  try {
+    // poseFor suit la table de C1 (testé une fois, hors iframe : la fonction est pure).
+    var f = await load(400, 300);
+    var C = f.contentWindow.Choreo;
+    ok(C, 'window.Choreo absent');
+    if (C) {
+      Object.keys(POSES).forEach(function (id) { ok(C.poseFor(id) === POSES[id], 'poseFor(' + id + ') = ' + POSES[id]); });
+      ok(C.poseFor('nope') === undefined, 'poseFor(inconnu) = undefined');
+    }
+    f.remove();
+    for (var i = 0; i < SIZES.length; i++) await checkSize(SIZES[i][0], SIZES[i][1], reduced);
+  } catch (e) {
+    fails.push('exception : ' + (e && e.stack || e));
+  }
+  document.getElementById('result').textContent = fails.length ? fails.join('\n') : 'OK';
+});
+</script>
+</body>
+</html>
