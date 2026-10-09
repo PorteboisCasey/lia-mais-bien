@@ -46,33 +46,7 @@ Une seule page en scrollytelling. **Casey** est fixé à l'écran (`position: fi
 
 ## 4. Architecture
 
-Fichiers séparés, mais sans build. Ce découpage permet aux agents de travailler en parallèle sans conflit de merge sur un fichier unique.
-
-```
-index.html            structure + contenu des 6 sections (agent 0)
-css/tokens.css        variables, polices, composants de base : bulle, sticker, phone (agent 0)
-css/sections.css      mise en page des sections, responsive (agent 0)
-css/casey.css         styles de la mascotte (agent 1)
-js/casey.js           rig SVG + API Casey (agent 1)
-js/choreo.js          ScrollTrigger : déplacement, poses, apparitions (agent 2)
-js/contact.js         formulaire → lien wa.me, FAQ (agent 4)
-assets/qr.svg         QR code (agent 4)
-affiche/              source + PDF de l'affiche mise à jour (agent 4)
-```
-
-### Contrat entre agents (fixé par l'agent 0, à ne pas modifier sans accord)
-
-- **Sections :** `<section id="hero|apprendre|infos|moi|faq|question" data-pose="sit|point|idle|wave|think|phone">`.
-- **Éléments animables :** `data-anim="words|draw|drop|pop"` sur les éléments que l'agent 2 anime.
-- **Mascotte :** conteneur `<div id="casey" aria-hidden="true"></div>`, rempli par `casey.js`.
-- **API Casey** (`window.Casey`, exposée par `casey.js`) :
-  - `Casey.mount(el)` : injecte le SVG riggé.
-  - `Casey.pose(name, {duration})` : `sit | idle | walk | point | wave | think | phone | party`.
-  - `Casey.walk(speed)` : vitesse de 0 à 1, 0 = arrêt (pilote le cycle de marche).
-  - `Casey.face(dir)` : `'left' | 'right'`.
-  - `Casey.celebrate()` : one-shot `party`.
-- **Événement :** `contact.js` émet `document.dispatchEvent(new CustomEvent('question:sent'))`, et `choreo.js` y répond par `Casey.celebrate()`.
-- **Ordre de chargement :** GSAP, ScrollTrigger, `casey.js`, `contact.js`, `choreo.js` (tous en `defer`).
+Fichiers séparés sans build. **Le découpage des fichiers, les contrats (C1–C4) et les agents sont définis dans `AGENTS.md`, qui fait foi.** Sur mobile, Casey marche dans une scène opaque de 96 px en bas d'écran (`#stage`), avec le bouton WhatsApp à droite.
 
 ### Rig de Casey
 
@@ -96,9 +70,9 @@ Bonjour Casey ! [Élève|Parent] · [Collège|Lycée]
 (envoyé depuis le site)
 ```
 
-Encodé avec `encodeURIComponent`, puis ouvert via `https://wa.me/33609148090?text=…`. Si la question est vide, le bouton est désactivé et un message d'aide s'affiche. Les deux choix sont facultatifs : sans sélection, la ligne correspondante est omise.
+Encodé avec `encodeURIComponent`, puis ouvert via `https://wa.me/33609148090?text=…`. Si la question est vide, un message d'aide s'affiche (le bouton n'est jamais désactivé, formulaire `novalidate`). Les deux choix sont facultatifs : sans sélection, la ligne correspondante est omise.
 
-## 6. QR code et affiche (agent 4)
+## 6. QR code et affiche (agent 2 · print)
 
 - QR code SVG noir sur blanc, correction d'erreur niveau M, pointant vers l'URL GitHub Pages définitive. Il est généré une seule fois, avec un script Python et le paquet `qrcode` (seule dépendance, hors du site).
 - Mise à jour de `affiche/affiche.html` :
@@ -108,16 +82,9 @@ Encodé avec `encodeURIComponent`, puis ouvert via `https://wa.me/33609148090?te
   - L'étoile « séance découverte » est remplacée par le QR code avec « Scanne & pose ta question ».
   - Le PDF est régénéré via Chrome headless.
 
-## 7. Découpage en agents (pour `/agents-init`)
+## 7. Découpage en agents
 
-| Agent | Livrable | Dépend de | Parallèle avec |
-|---|---|---|---|
-| 0 · fondations | `index.html`, `css/tokens.css`, `css/sections.css`, contrat §4 | — | — |
-| 1 · mascotte | `js/casey.js`, `css/casey.css`, page de test `dev/casey.html` (toutes les poses + marche) | 0 | 4 |
-| 4 · contact & print | `js/contact.js`, FAQ, `assets/qr.svg`, affiche mise à jour | 0 | 1 |
-| 2 · chorégraphie | `js/choreo.js` | 0, 1 | — |
-
-Chaque agent travaille dans son propre worktree, sur une branche `agent/<n>-<nom>`, avec un merge sur `main` après validation.
+Voir `AGENTS.md` : 0 socle → 1 mascotte ∥ 2 print → 3 chorégraphie/intégration.
 
 ## 8. Vérification
 
