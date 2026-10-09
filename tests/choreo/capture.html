@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Capture chorégraphie</title>
+<style>html, body { margin: 0; background: #888; } iframe { display: block; border: 0; }</style>
+</head>
+<body>
+<script>
+/* capture.html?w=375&h=667&p=0.5 : index.html dans une iframe w×h, scrollée à la progression p.
+   capture.html?w=375&h=4200&nojs : iframe sandbox sans allow-scripts, donc vraiment sans JS
+   (--disable-javascript est ignoré par --headless=new).
+   Lancé par capture.sh (chrome --screenshot). Le ticker GSAP est cadencé à la main (temps virtuel). */
+var q = new URLSearchParams(location.search);
+var W = +q.get('w'), H = +q.get('h'), P = +q.get('p');
+var f = document.createElement('iframe');
+f.style.width = W + 'px';
+f.style.height = H + 'px';
+if (q.has('nojs')) f.sandbox = 'allow-same-origin';
+f.src = '../../index.html';
+f.onload = function () {
+  if (q.has('nojs')) return;
+  var win = f.contentWindow, ST = win.ScrollTrigger;
+  if (!ST) return;
+  setInterval(function () { win.gsap.ticker.tick(); }, 16);
+  setTimeout(function () {
+    ST.refresh();
+    var y = Math.round(ST.maxScroll(win) * P), y0 = win.scrollY, n = 20, i = 0;
+    // Scroll en 20 pas, puis repos : Casey arrive et s'arrête de marcher.
+    var step = setInterval(function () {
+      i++;
+      win.scrollTo({ top: y0 + (y - y0) * i / n, behavior: 'instant' });
+      win.document.dispatchEvent(new win.Event('scroll'));
+      ST.update();
+      if (i >= n) clearInterval(step);
+    }, 16);
+  }, 1500);
+};
+document.body.appendChild(f);
+</script>
+</body>
+</html>

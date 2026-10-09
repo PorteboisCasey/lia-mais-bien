@@ -134,6 +134,11 @@ h1 .hl { color: var(--accent); }
   gap: 20px;
   align-items: center;
 }
+/* Écran étroit : la bulle passe au-dessus, sinon le numéro (nowrap) déborde à 375 px */
+@media (max-width: 479px) {
+  .me { grid-template-columns: 1fr; gap: 8px; }
+  .buddy { display: flex; align-items: flex-end; gap: 12px; }
+}
 .buddy { text-align: center; }
 .hey {
   display: inline-block;
