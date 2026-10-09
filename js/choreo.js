@@ -10,10 +10,21 @@ var Choreo = (function () {
   var STAGE = 96;        // hauteur de #stage
   var BUTTON_ZONE = 80;  // zone de #wa-float, à droite de la scène (mobile)
   var CASEY_RATIO = 90 / 62; // viewBox du SVG de casey.js
-  var CROSS = 0.12;      // part d'un segment desktop pour sortir en bas, puis autant pour rentrer en haut
   var SPEED = 1500;      // px/s de scroll pour une marche à pleine vitesse
 
+  // Ce que Casey pense en arrivant dans chaque section (bulle de ~3 s, une fois par visite).
+  var THOUGHTS = {
+    hero: 'Salut ! Je te fais visiter ?',
+    apprendre: "L'IA, ça se vérifie toujours.",
+    infos: "Et c'est moi qui me déplace !",
+    moi: 'Enchanté !',
+    faq: 'Hmm… bonne question.',
+    question: 'À toi ! Écris-moi juste au-dessus.'
+  };
+  var THOUGHT_TIME = 3; // s
+
   function poseFor(id) { return POSE[id]; }
+  function thoughtFor(id) { return THOUGHTS[id]; }
 
   function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
   function lerp(a, b, t) { return a + (b - a) * t; }
@@ -22,7 +33,6 @@ var Choreo = (function () {
   // Mesure tout ce dont pathAt a besoin. Les positions sont en px d'écran, le siège en px de document.
   function measure() {
     var h = window.innerHeight;
-    var main = document.querySelector('main').getBoundingClientRect();
     var seat = document.getElementById('casey-seat');
     var svg = document.querySelector('#casey svg');
     var box = (svg || document.getElementById('casey')).getBoundingClientRect();
@@ -37,7 +47,6 @@ var Choreo = (function () {
       w: document.documentElement.clientWidth,
       h: h,
       desktop: window.matchMedia('(min-width: 1024px)').matches,
-      column: { left: main.left, right: main.right },
       seat: sr ? { x: sr.left, y: sr.top + window.scrollY } : null,
       scrollMax: scrollMax,
       casey: { w: box.width, h: svg ? box.height : box.width * CASEY_RATIO },
@@ -45,73 +54,75 @@ var Choreo = (function () {
     };
   }
 
-  // Desktop : côté de chaque segment. Hero → droite (le siège est à droite de la bulle), puis on alterne :
-  // apprendre G, infos D, moi G (à côté de « C'est moi ! »), faq D, question G (loin de #wa-float).
-  function side(i) { return i % 2 ? 'L' : 'R'; }
-
-  function gutter(s, vp) {
-    var cw = vp.casey.w, a, b;
-    if (s === 'L') { a = 16; b = vp.column.left - 16 - cw; }
-    else { a = vp.column.right + 16; b = vp.w - 104 - cw; } // 104 : #wa-float (28 + 64) + marge
-    if (b < a) b = a = s === 'L' ? Math.max(0, vp.column.left - cw) / 2 : (vp.column.right + vp.w - cw) / 2;
-    // Casey marche vers la colonne : de l'extérieur vers l'intérieur.
-    return s === 'L' ? { from: a, to: b, face: 'right' } : { from: b, to: a, face: 'left' };
+  // Bornes de la marche dans #stage : de la gauche jusqu'avant #wa-float (desktop : 28 + 64 px + marge).
+  function lane(vp) {
+    var a = 12, b = vp.w - (vp.desktop ? 104 : BUTTON_ZONE + 8) - vp.casey.w;
+    return { a: a, b: Math.max(a, b), y: vp.h - 8 - vp.casey.h };
   }
 
-  // Point d'arrivée du segment i (desktop) : là où commence la sortie du segment suivant.
-  function endOf(i, vp) {
-    var g = gutter(side(i), vp);
-    return i === 0 ? { x: g.from, y: vp.h * 0.35 } : { x: g.to, y: vp.h - vp.casey.h - 40 };
-  }
-
-  function desktopAt(i, t, p, vp) {
-    var ch = vp.casey.h, g = gutter(side(i), vp);
-    if (i === 0) {
-      // Hero : assis sur le siège (qui remonte avec la page), il saute dans la gouttière droite.
-      var sx = vp.seat ? vp.seat.x : g.from;
-      var sy = (vp.seat ? vp.seat.y : vp.h * 0.2) - p * vp.scrollMax - ch;
-      var e = endOf(0, vp), u = smooth(t);
-      return { x: lerp(sx, e.x, u), y: lerp(sy, e.y, u) - Math.sin(Math.PI * t) * 60, face: 'right' };
-    }
-    var prev = endOf(i - 1, vp), yTop = vp.h * 0.2, yBot = vp.h - ch - 40;
-    if (t < CROSS) {                                 // sort par le bas, du côté précédent
-      return { x: prev.x, y: lerp(prev.y, vp.h + 10, smooth(t / CROSS)), face: g.face };
-    }
-    if (t < 2 * CROSS) {                             // rentre par le haut, de l'autre côté
-      return { x: g.from, y: lerp(-ch - 10, yTop, smooth((t - CROSS) / CROSS)), face: g.face };
-    }
-    var u2 = (t - 2 * CROSS) / (1 - 2 * CROSS);    // descend en marchant vers la colonne
-    return { x: lerp(g.from, g.to, smooth(u2)), y: lerp(yTop, yBot, u2), face: g.face };
-  }
-
-  // Mobile : allers-retours dans #stage, un trajet par section, hors de la zone du bouton.
-  function mobileAt(i, t, vp) {
-    var a = 12, b = Math.max(a, vp.w - BUTTON_ZONE - vp.casey.w - 8), fwd = i % 2 === 0;
-    var u = smooth(t);
-    return { x: fwd ? lerp(a, b, u) : lerp(b, a, u), y: vp.h - 8 - vp.casey.h, face: fwd ? 'right' : 'left' };
-  }
-
-  // Position (coin haut-gauche de Casey, en px d'écran) et sens de marche pour une progression 0…1.
+  // Barre de progression : x suit l'avancée dans la page, de la gauche (haut) à la droite (bas).
+  // Sur desktop, le hero est à part : Casey quitte la bulle du titre et saute au début de la bande.
   function pathAt(progress, vp) {
-    var p = clamp(progress, 0, 1), st = vp.stops, i = 0;
-    while (i + 1 < st.length && st[i + 1] <= p) i++;
-    var a = st[i], b = i + 1 < st.length ? st[i + 1] : 1;
-    var t = b > a ? clamp((p - a) / (b - a), 0, 1) : 1;
-    return vp.desktop ? desktopAt(i, t, p, vp) : mobileAt(i, t, vp);
+    var p = clamp(progress, 0, 1), L = lane(vp);
+    if (!vp.desktop) return { x: lerp(L.a, L.b, p), y: L.y, face: 'right' };
+    var s1 = vp.stops[1];
+    if (p < s1) {
+      var t = p / s1, u = smooth(t);
+      var sx = vp.seat ? vp.seat.x : L.a;
+      var sy = (vp.seat ? vp.seat.y : vp.h * 0.2) - p * vp.scrollMax - vp.casey.h;
+      return { x: lerp(sx, L.a, u), y: lerp(sy, L.y, u) - Math.sin(Math.PI * t) * 60, face: 'left' };
+    }
+    return { x: lerp(L.a, L.b, (p - s1) / (1 - s1)), y: L.y, face: 'right' };
   }
 
-  // Reduced-motion : une place fixe, au bas de la gouttière gauche (desktop) ou à gauche de la scène.
+  // Reduced-motion : une place fixe, au début de la bande.
   function stillAt(vp) {
-    return vp.desktop ? { x: gutter('L', vp).to, y: vp.h - vp.casey.h - 40 } : mobileAt(0, 0, vp);
+    var L = lane(vp);
+    return { x: L.a, y: L.y };
   }
 
   // --- Branchement sur la page ---------------------------------------------
 
-  var box, vp;
+  var box, bubble, vp, here, seen = {}, hideCall = null;
 
   function place(r) {
+    here = r;
     // #casey est ancré en bas de l'écran : y relatif au bas, insensible à la barre d'adresse mobile.
     gsap.set(box, { x: r.x, y: r.y - (vp.h - vp.casey.h) });
+    if (!bubble.hidden) placeBubble();
+  }
+
+  // La bulle suit Casey, du côté où il reste le plus de place avant #wa-float, centrée sur lui en hauteur.
+  // Sa largeur s'adapte à cette place : elle ne recouvre ni Casey ni le bouton, et reste dans la bande.
+  function placeBubble() {
+    var L = lane(vp), gap = 12, cw = vp.casey.w;
+    var limit = L.b + cw;                            // bord droit utilisable
+    var right = limit - (here.x + cw + gap), left = here.x - gap - 8;
+    var toRight = right >= left;
+    bubble.style.maxWidth = Math.max(96, Math.min(240, toRight ? right : left)) + 'px';
+    var bw = bubble.offsetWidth, bh = bubble.offsetHeight;
+    var x = toRight ? here.x + cw + gap : here.x - gap - bw;
+    var y = clamp(here.y + (vp.casey.h - bh) / 2, 4, vp.h - 4 - bh);
+    bubble.setAttribute('data-side', toRight ? 'right' : 'left');
+    gsap.set(bubble, { x: clamp(x, 8, limit - bw), y: y - (vp.h - bh) });
+  }
+
+  function think(id, animate) {
+    if (seen[id] || !THOUGHTS[id]) return;
+    seen[id] = true;
+    if (hideCall) hideCall.kill();
+    gsap.killTweensOf(bubble);
+    bubble.textContent = THOUGHTS[id];
+    bubble.hidden = false;
+    gsap.set(bubble, { autoAlpha: 1, scale: 1 });
+    placeBubble();
+    if (animate) gsap.from(bubble, { scale: 0.5, duration: 0.35, ease: 'back.out(3)' });
+    hideCall = gsap.delayedCall(THOUGHT_TIME, function () {
+      gsap.to(bubble, {
+        autoAlpha: 0, duration: animate ? 0.25 : 0,
+        onComplete: function () { bubble.hidden = true; }
+      });
+    });
   }
 
   function poseTriggers(onPose) {
@@ -132,7 +143,7 @@ var Choreo = (function () {
 
     vp = measure();
     place(pathAt(0, vp));
-    poseTriggers(function (id) { active = id; setPose(id === 'hero' ? heroPose() : poseFor(id)); });
+    poseTriggers(function (id) { active = id; setPose(id === 'hero' ? heroPose() : poseFor(id)); think(id, true); });
 
     gsap.to(proxy, {
       p: 1, ease: 'none',
@@ -160,7 +171,7 @@ var Choreo = (function () {
   function still() {
     function onRefresh() { vp = measure(); place(stillAt(vp)); }
     onRefresh();
-    poseTriggers(function (id) { Casey.pose(poseFor(id)); });
+    poseTriggers(function (id) { Casey.pose(poseFor(id)); think(id, false); });
     ScrollTrigger.addEventListener('refresh', onRefresh);
     return function () { ScrollTrigger.removeEventListener('refresh', onRefresh); };
   }
@@ -233,10 +244,11 @@ var Choreo = (function () {
 
   function boot() {
     var host = document.getElementById('casey');
-    if (!host || !window.gsap || !window.ScrollTrigger || !window.Casey) return;
+    if (!host || !document.getElementById('casey-bubble') || !window.gsap || !window.ScrollTrigger || !window.Casey) return;
     gsap.registerPlugin(ScrollTrigger);
     Casey.mount(host);
     box = host;
+    bubble = document.getElementById('casey-bubble');
     document.documentElement.classList.add('casey-live'); // masque le Casey statique de #moi
 
     gsap.matchMedia().add({
@@ -253,5 +265,5 @@ var Choreo = (function () {
 
   if (typeof document !== 'undefined') boot();
 
-  return { POSES: POSE, poseFor: poseFor, pathAt: pathAt, measure: measure };
+  return { POSES: POSE, poseFor: poseFor, thoughtFor: thoughtFor, pathAt: pathAt, measure: measure };
 })();

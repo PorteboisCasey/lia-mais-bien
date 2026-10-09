@@ -27,9 +27,9 @@ Un agent qui doit changer un contrat **s'arrête et le signale**. Il ne le conto
   - `pop` : la bulle « C'est moi ! » ;
   - `shine` : les éclats du titre ;
   - `hint` : la flèche « scrolle ».
-- **Mascotte** : `<div id="casey" aria-hidden="true"></div>`, enfant direct de `<body>`.
-- **Scène mobile** (< 1024 px) : `<div id="stage" aria-hidden="true">`, une bande fixe en bas de **96 px**. Elle est opaque (fond papier) et porte une bordure haute en pointillés, comme la ligne de découpe de l'affiche. Casey y marche. `#wa-float` est posé à droite dans la bande, et la zone de Casey **exclut les 80 px de droite**. Le `body` a un `padding-bottom: 96px`.
-- **Desktop** (≥ 1024 px) : contenu centré sur 640 px max. Casey se déplace dans les gouttières latérales, et `#stage` est masqué.
+- **Mascotte** : `<div id="casey" aria-hidden="true"></div>`, enfant direct de `<body>`, suivi de `<div id="casey-bubble" aria-hidden="true" hidden></div>` (bulle de pensée, voir « Casey progression » plus bas).
+- **Scène** (mobile, et desktop depuis « Casey progression ») : `<div id="stage" aria-hidden="true">`, une bande fixe en bas de **96 px**. Elle est opaque (fond papier) et porte une bordure haute en pointillés, comme la ligne de découpe de l'affiche. Casey y marche. `#wa-float` est posé à droite dans la bande, et la zone de Casey **exclut les 80 px de droite**. Le `body` a un `padding-bottom: 96px`.
+- **Desktop** (≥ 1024 px) : contenu centré sur 640 px max. ~~Casey se déplace dans les gouttières latérales, et `#stage` est masqué.~~ Remplacé par « Casey progression » : `#stage` est visible et Casey le traverse.
 - **Hero** : à côté de la bulle du titre, un emplacement `<div id="casey-seat">` marque la position assise de Casey (au-dessus de la bulle sur desktop ; sur mobile, Casey reste dans la scène).
 - **FAQ** : `<details class="faq-item"><summary>…</summary><div>…</div></details>`. Elle est native, sans JS. Un CSS progressif (`interpolate-size`/`::details-content`) peut adoucir l'ouverture là où le navigateur le supporte.
 - **Formulaire** : `<form id="question-form" novalidate>`, qui contient :
@@ -145,7 +145,7 @@ var Contact = {
 
 - [ ] `bash tests/run.sh` passe sur la branche intégrée. Il inclut `tests/casey/run.sh` et `tests/choreo/run.sh`.
 - [ ] Les 6 sections sont dans l'ordre, et la page est lisible sans JS. Preuve : `chrome --headless --disable-javascript --screenshot` aux tailles 375 et 1440.
-- [ ] Hors hero, Casey n'est jamais sur la colonne de contenu (desktop), et il reste dans `#stage` hors de la zone du bouton (mobile). Preuve : tests `pathAt` et captures headless à 375 × 667, 390 × 844 et 1440 × 900, prises à 5 positions de scroll.
+- [ ] Hors hero, Casey reste dans `#stage` hors de la zone du bouton (desktop et mobile, depuis « Casey progression »). Preuve : tests `pathAt` et captures headless à 375 × 667, 390 × 844 et 1440 × 900, prises à 5 positions de scroll.
 - [ ] Casey change de pose dans chaque section et marche pendant le scroll. Preuve : test chorégraphie ; la fluidité est **validée par l'humain**.
 - [ ] Reduced-motion : aucune animation de scroll, Casey est statique. Preuve : test lancé avec `--force-prefers-reduced-motion`.
 - [ ] Le formulaire produit l'URL exacte de C3 (fixtures) et déclenche `celebrate`. Le test réel d'ouverture de WhatsApp est fait **par l'humain**.
@@ -253,3 +253,14 @@ Relecture humaine (non testé) :
 - [ ] Lighthouse mobile ≥ 90 en performance et en accessibilité (phase 0 et fin de l'agent 5).
 - [ ] Style validé par l'humain : `apprendre` et la mise en page (agent 4), les 5 autres scènes (agent 5).
 - [ ] Mise en ligne et test iPhone : **par l'humain**, après son OK.
+
+---
+
+# Casey progression (2026-10-09)
+
+Modif bornée, faite par l'orchestrateur sur `feat/casey-progression` (pas d'agent). Elle amende C1 et la checklist « fini » ci-dessus.
+
+- **Barre de progression** : dans `#stage`, l'abscisse de Casey suit l'avancée dans la page, de la gauche (haut de page) jusqu'avant `#wa-float` (bas de page). Elle ne recule jamais quand on descend. Sur desktop, le hero est à part : Casey part de `#casey-seat` et saute au début de la bande.
+- **`#stage` sur desktop** : visible, 96 px. `#casey` y fait 60 px de large (87 px de haut). `body` garde `padding-bottom: 96px`.
+- **Bulle de pensée** (`#casey-bubble`) : une phrase par section (`Choreo.thoughtFor(id)`), affichée en entrant dans la section, environ 3 s, une seule fois par visite. Elle suit Casey du côté où il reste le plus de place, dans la bande, hors de la zone du bouton. Elle est décorative (`aria-hidden`), et cachée sans JS. En reduced-motion, elle apparaît sans rebond.
+- **Tests** : `tests/choreo/choreo.test.html` vérifie la progression, la bande et les bulles. Le budget de temps virtuel de `tests/lib.sh` passe à 20 s pour attendre l'effacement des bulles.

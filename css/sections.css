@@ -287,7 +287,7 @@ h1 .hl { color: var(--accent); }
 }
 .form-note { margin-top: 12px; font-size: .95rem; }
 
-/* --- Scène mobile + bouton flottant --- */
+/* --- Scène (bande du bas, mobile et desktop) + bouton flottant --- */
 #stage {
   position: fixed;
   inset: auto 0 0 0;
@@ -307,6 +307,37 @@ h1 .hl { color: var(--accent); }
 }
 #casey svg { display: block; width: 100%; height: auto; overflow: visible; }
 
+/* Bulle de pensée : placée par la chorégraphie à côté de Casey (x, y relatif au bas), dans la bande. */
+#casey-bubble {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 25;
+  padding: 7px 11px;
+  border: var(--line) solid var(--ink);
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: 3px 3px 0 var(--ink);
+  font-size: .85rem;
+  font-weight: 800;
+  line-height: 1.2;
+  pointer-events: none;
+}
+#casey-bubble[hidden] { display: none; }
+/* La queue pointe vers Casey. */
+#casey-bubble::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  border: solid var(--ink);
+  background: var(--paper);
+}
+#casey-bubble[data-side="right"]::before { left: -7px; border-width: 0 0 var(--line) var(--line); transform: rotate(45deg); }
+#casey-bubble[data-side="left"]::before { right: -7px; border-width: var(--line) var(--line) 0 0; transform: rotate(45deg); }
+
 #wa-float {
   position: fixed;
   right: 12px;
@@ -324,14 +355,13 @@ h1 .hl { color: var(--accent); }
 }
 #wa-float svg { width: 32px; height: 32px; }
 
-/* --- Desktop : colonne centrée, Casey dans les gouttières --- */
+/* --- Desktop : colonne centrée, Casey traverse la bande du bas --- */
 @media (min-width: 1024px) {
-  body { padding: 0 140px; } /* gouttières réservées */
-  #stage { display: none; }
+  body { padding: 0 140px 96px; }
   main { padding-inline: 24px; }
   section { --pad-top: 120px; --pad-bottom: 104px; } /* le hero garde ses 120 px : place pour Casey assis au-dessus de la bulle */
   .card { padding: 28px 28px; }
-  #casey { width: 72px; }
-  #wa-float { right: 28px; bottom: 28px; }
+  #casey { width: 60px; } /* 87 px de haut : tient dans la bande de 96 px */
+  #wa-float { right: 28px; }
   .stickers { gap: 22px; }
 }
