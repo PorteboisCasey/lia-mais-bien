@@ -69,8 +69,9 @@
   .party-btn { background: var(--accent); font-family: var(--font-display); font-weight: 400; font-size: 1.2rem; }
   label { display: grid; gap: 6px; font-weight: 700; }
   input[type="range"] { width: 100%; accent-color: var(--accent); }
-  .check { display: flex; gap: 10px; align-items: center; font-weight: 600; }
-  .check input { width: 22px; height: 22px; accent-color: var(--accent); }
+  .motion-toggle { display: flex; gap: 10px; align-items: center; font-weight: 600; }
+  .motion-toggle input { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
+  .motion-toggle span { flex: 1; min-width: 0; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; }
   #state { margin: 0; padding: 10px 12px; border: 2px dashed var(--ink); border-radius: 10px; font-size: .9rem; }
   .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
@@ -102,7 +103,7 @@
         <button id="face" type="button">Se retourner</button>
         <button id="party" type="button" class="party-btn">celebrate()</button>
       </div>
-      <label class="check"><input id="force" type="checkbox"> Ignorer « Réduire les animations » du système</label>
+      <label class="motion-toggle"><input id="force" type="checkbox"><span>Ignorer « Réduire les animations » du système</span></label>
       <pre id="state"></pre>
     </div>
   </div>

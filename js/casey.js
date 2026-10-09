@@ -194,6 +194,7 @@
   var W = { amp: 0, arms: 1 };
   var walkTl = null;
   var set = {};
+  var strideTarget = 1;
 
   function reduced() {
     return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -282,6 +283,7 @@
     var arms = (requested === 'idle' || requested === 'walk') && !celebrating ? 1 : 0;
     if (reduced()) {
       gsap.killTweensOf(W);
+      strideTarget = 1;
       gsap.set(T.stride, { scaleX: 1, overwrite: true });
       walkTl.pause();
       W.amp = 0;
@@ -291,8 +293,12 @@
     }
     var speed = walkSpeed > 0 ? walkSpeed : (requested === 'walk' && !celebrating ? 0.5 : 0);
     // En marche, le pied gauche (tourné vers l'extérieur au repos) pointe dans le sens de la marche.
+    // walk() est appelé à chaque frame de scroll : on ne recrée ce tween que si la cible change.
     var stride = speed > 0 ? -PROPS[requested].footL.scaleX : 1;
-    gsap.to(T.stride, { scaleX: stride, duration: 0.2, overwrite: true });
+    if (stride !== strideTarget) {
+      strideTarget = stride;
+      gsap.to(T.stride, { scaleX: stride, duration: 0.2, overwrite: true });
+    }
     if (speed > 0) {
       if (walkTl.paused()) walkTl.play();
       gsap.to(walkTl, { timeScale: 0.6 + 1.4 * speed, duration: 0.25, overwrite: true });
@@ -342,7 +348,9 @@
       svgs.push(svg);
       buildWalk();
       updateWalk();
-      if (svgs.length === 1) { startLoop(requested); scheduleBlink(); }
+      // La boucle en cours ne connaît pas ce nouveau rig : on la relance.
+      if (!trans && !celebrating) startLoop(requested);
+      if (svgs.length === 1) scheduleBlink();
       return svg;
     },
 
