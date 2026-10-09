@@ -152,3 +152,98 @@ var Contact = {
 - [ ] `npx -y lighthouse <url> --form-factor=mobile --only-categories=performance,accessibility --chrome-flags=--headless` donne au moins 90 dans chaque catégorie.
 - [ ] `assets/qr.svg` se décode exactement en `SITE_URL`, et le PDF de l'affiche tient sur une seule page A4.
 - [ ] Test sur un vrai iPhone (Safari) via l'IP locale, **validé par l'humain**.
+
+---
+
+# Chantier 2 · Décors dessinés (2026-10-09)
+
+Spec : `docs/superpowers/specs/2026-10-09-decors-design.md`. **Lis-la en entier.** Elle remplace la trame manga (commits `b9e8692`, `877b2d7`). **En cas de divergence avec la spec (notamment sa section « Livraison »), cette partie fait foi.** Les agents 0 à 3 ci-dessus sont terminés ; leurs prompts sont archivés dans `.agents/archive/`. Ce chantier utilise les agents 4 et 5.
+
+## Entrées humaines (toutes fournies)
+
+| Entrée | Valeur |
+|---|---|
+| Organisation | Un décor par section, plein fond, texte sur cartes papier, approche A (décor solidaire de la section, sans couche fixe ni parallaxe) |
+| Rendu | Couleurs pastel cernées de noir, dessinées à la main en SVG |
+| Scènes et aplats | Tableau « Les 6 scènes » de la spec (lieu, bande du haut, bande du bas, couleur) |
+| Validation du style | L'humain valide la mise en page et la scène `apprendre` (fin de l'agent 4), puis les 5 autres scènes (fin de l'agent 5). Chaque agent attend un oui clair avant son rapport « terminé ». |
+| Mise en ligne | Push sur `origin/main` **par l'orchestrateur, après l'OK de l'humain** (action externe : c'est GitHub Pages). Aucun agent ne pousse. |
+
+## Contrats
+
+### C1 (amendé)
+
+- **Cartes** : le contenu de chaque section est dans un unique `<div class="card">`, seul enfant élément de la `<section>`. Dans le hero, la carte contient le kicker, la bulle, le sous-titre et la flèche ; `#casey-seat` reste dans `.hero-bubble`.
+- **Cases** : chaque section déborde de `main` (`margin-inline: calc(50% - 50vw)`). `main` garde `max-width: 640px` : `tests/choreo` le mesure comme colonne interdite à Casey. `html { overflow-x: clip }` empêche le défilement horizontal. Sur un desktop à barre de défilement classique, `50vw` inclut la barre : un décalage d'environ 8 px du décor est accepté.
+- **Décors** : portés **uniquement** en arrière-plan CSS de la section, dans `css/sections.css`, dans cet ordre de couches : bande du haut, bande du bas, couche sol (`linear-gradient(var(--floor-<id>) 0 0)` en bas, pleine largeur, sous la bande du bas, pour les écrans de plus de 1600 px), aplat `--decor-<id>`. Aucun élément de décor dans le DOM. Les 12 fichiers sont branchés dès la phase 0 (stubs).
+- **Retirés** : la trame du `body`, `.hero-bubble::before` et le détourage du `.kicker`.
+
+### C5. Fichiers de décor (`assets/decors/`)
+
+Testé par `tests/test_decors.py` :
+- Noms : `<id>-haut.svg` et `<id>-bas.svg` pour `id` ∈ `hero apprendre infos moi faq question`. Exactement 12 fichiers.
+- Racine : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 220" width="1600" height="220">` (haut) ou `0 0 1600 180` / `1600`×`180` (bas). `width`/`height` sont obligatoires (Safari en a besoin pour `background-size: auto <h>`).
+- **Interdits** : `<text>`, `<image>`, `<filter>`, `<foreignObject>`, `<script>`, `<style>`, `<pattern>`, dégradés, `<use>`, tout attribut `href`/`xlink:href`, tout attribut `opacity`, `fill-opacity`, `stroke-opacity`, l'attribut `style`.
+- **Couleurs** : toute forme fermée (`rect`, `circle`, `ellipse`, `polygon`, `path` fermé par `Z`) porte un `fill` explicite, directement ou hérité d'un `<g>`. Les valeurs sont normalisées par le test (minuscules, `#abc` → `#aabbcc`) et doivent appartenir à C6. `none` est accepté pour `fill` et `stroke`. Les noms de couleur (`white`…) et `currentColor` sont refusés.
+- Coordonnées entières : aucun nombre décimal (regex `\d\.\d`).
+- Taille : **20 Ko max** par fichier, non compressé.
+
+Relecture humaine (non testé) :
+- **Zone essentielle horizontale** : x de 550 à 1050. C'est tout ce qu'on voit à 375 px.
+- **Zone visible verticale à 375 px** : haut y de 0 à `N`, bas y de `M` à 180. **`N` et `M` sont mesurés et écrits ici par l'agent 4** (hors de cette zone, la carte cache le dessin) : `N = À MESURER`, `M = À MESURER`.
+- **Décor de bord** (x < 550 et x > 1050) : grands aplats, peu de traits, rien de dense. Sur desktop, Casey marche devant.
+- La bande du haut est transparente là où rien n'est dessiné ; la bande du bas peint son sol sur toute sa largeur, de la couleur `--floor-<id>`.
+
+### C6. Guide de style des décors
+
+- Trait : `stroke="#111" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"` (posé sur un `<g>` englobant). Détails intérieurs : `stroke-width="2"`.
+- Perspective frontale : murs de face, sol en bande horizontale, aucune fuite en diagonale.
+- Formes simples et arrondies (`rx` sur les rectangles), un peu de « main levée » permise par de légers décalages, jamais de bruit.
+- Accent `#ff4d00` : petites touches seulement (relecture humaine).
+- **Palette.** Point de départ ci-dessous ; l'agent 4 la complète **en pensant aux 6 scènes** (cerisier, toit, néons, écran, dos de livres, guirlande…), l'agent 5 peut encore y ajouter une couleur si une scène l'exige, en mettant à jour ce tableau et la constante de `tests/test_decors.py` dans le même commit, avec une ligne de justification dans son rapport.
+
+| Rôle | Hex |
+|---|---|
+| Encre | `#111111` |
+| Papier | `#ffffff` |
+| Aplats de section | `#cde8f6` `#ddefe3` `#fff3c9` `#e6e1f5` `#f5e6d3` `#fbe1e3` |
+| Bois clair / foncé | `#ebcfa8` `#c99b6b` |
+| Vert tableau / plante | `#6e9c82` `#9ccb8f` |
+| Gris clair / moyen | `#e9e9ee` `#bfc3cc` |
+| Bleu nuit (soir) / ciel soir | `#3d4a7a` `#f7c6a3` |
+| Accent | `#ff4d00` |
+
+## Ressources partagées
+
+| Ressource | Règle |
+|---|---|
+| `index.html`, `css/tokens.css`, `css/sections.css`, `tests/test_decors.py`, `tools/capture-decors.sh` | Agent 4, puis agent 5 (retouches minimales, justifiées dans le rapport). |
+| `assets/decors/` | Agent 4 (stubs et `apprendre`), puis agent 5 (les 5 autres scènes ; `apprendre-*` en lecture seule). |
+| `AGENTS.md` | Agent 4 : C5 (`N`, `M`) et C6. Agent 5 : C6 seulement. |
+| `tests/choreo/`, `tests/casey/`, `tests/run.sh`, `tests/lib.sh` | Lecture seule. Captures dans le scratchpad, jamais dans le dépôt. |
+| Dépendances | Aucune nouvelle. Pas de `package.json`. Lighthouse via `npx -y lighthouse`. |
+| Ports | Agent 4 : 8004. Agent 5 : 8005. |
+| BDD / `.env` / secrets | Aucun. |
+| Fusion dans `main` | Agent 4 travaille sur `main`. Agent 5 (rôle intégration) ramène `feat/decors-scenes` sur `main` en fast-forward. L'orchestrateur pousse après l'OK humain, puis supprime `feat/decors`. |
+
+## Phases
+
+- **Phase 0** : agent 4. Cases, cartes, stubs, test, script de captures, mesure de `N`/`M`, palette, scène `apprendre`, Lighthouse. Point d'arrêt humain.
+- **Phase 1–2** : agent 5. Les 5 autres scènes à la suite, vérifications, point d'arrêt humain, fusion dans `main`.
+
+## Agents
+
+| # | Branche | Fichiers possédés | Mission |
+|---|---|---|---|
+| 4 · socle décors | `main` | `index.html`, `css/tokens.css`, `css/sections.css`, `tests/test_decors.py`, `tools/capture-decors.sh`, `assets/decors/`, `AGENTS.md` | Mise en page, contrats chiffrés, scène de référence, validation humaine |
+| 5 · scènes | `feat/decors-scenes` | `assets/decors/` (hors `apprendre-*`), retouches de `css/*.css`, `index.html`, C6 de `AGENTS.md`, constante palette de `tests/test_decors.py` | 5 scènes dans le style validé, vérifications, validation humaine, fusion |
+
+## Définition de « fini »
+
+- [ ] `bash tests/run.sh` passe sur `main` après la fusion, et `tests/test_decors.py` en fait partie (découvert par `test_*.py`).
+- [ ] Les 12 SVG respectent C5 (test) et C6 (test pour la palette, relecture pour le reste).
+- [ ] `tools/capture-decors.sh` : chaque section à 375 et 1440 montre son décor avec ses éléments essentiels visibles autour de la carte.
+- [ ] `tests/choreo/capture.sh` : aucun défilement horizontal ; Casey reste hors colonne (desktop) et dans `#stage` (mobile).
+- [ ] Lighthouse mobile ≥ 90 en performance et en accessibilité (phase 0 et fin de l'agent 5).
+- [ ] Style validé par l'humain : `apprendre` et la mise en page (agent 4), les 5 autres scènes (agent 5).
+- [ ] Mise en ligne et test iPhone : **par l'humain**, après son OK.
