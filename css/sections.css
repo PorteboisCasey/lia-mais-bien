@@ -146,6 +146,7 @@ h1 .hl { color: var(--accent); }
   white-space: nowrap;
 }
 .buddy svg { display: block; width: 96px; height: auto; overflow: visible; }
+.casey-live .buddy svg { display: none; } /* le vrai Casey est monté : pas de doublon */
 .name { font-size: 2.6rem; line-height: 1; }
 .who { margin: 6px 0 16px; font-weight: 700; line-height: 1.25; }
 
@@ -223,10 +224,11 @@ h1 .hl { color: var(--accent); }
   border-top: 3px dashed var(--ink); /* la ligne de découpe de l'affiche */
   z-index: 10;
 }
+/* Ancré en bas à gauche : la chorégraphie le place par transform (x, y relatif au bas). */
 #casey {
   position: fixed;
-  left: 16px;
-  bottom: 8px;
+  left: 0;
+  bottom: 0;
   width: 56px;
   z-index: 20;
   pointer-events: none;
@@ -256,7 +258,7 @@ h1 .hl { color: var(--accent); }
   #stage { display: none; }
   main { padding-inline: 24px; }
   #hero { padding-top: 120px; } /* place pour Casey assis au-dessus de la bulle */
-  #casey { left: 40px; bottom: 24px; width: 72px; }
+  #casey { width: 72px; }
   #wa-float { right: 28px; bottom: 28px; }
   .stickers { gap: 22px; }
 }

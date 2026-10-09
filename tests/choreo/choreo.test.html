@@ -30,6 +30,10 @@ function load(w, h) {
     f.style.width = w + 'px';
     f.style.height = h + 'px';
     f.onload = function () { resolve(f); };
+    // Les erreurs de l'iframe (ex. dans un callback ScrollTrigger) font échouer le test.
+    f.addEventListener('load', function () {
+      f.contentWindow.addEventListener('error', function (e) { fails.push(w + '×' + h + ' : erreur dans la page : ' + e.message); });
+    });
     f.src = '../../index.html';
     document.body.appendChild(f);
   });
@@ -94,16 +98,19 @@ async function checkSize(W, H, reduced) {
   }
 
   // Tout le trajet : jamais de téléport à l'écran ; hors hero, jamais sur la colonne (desktop) ; toujours dans la scène (mobile).
-  var prev = null, jumps = 0, onColumn = 0, outStage = 0;
-  for (var i = 0; i <= 1000; i++) {
-    var p = i / 1000, r = C.pathAt(p, vp);
+  var prev = null, jumps = 0, onColumn = 0, outStage = 0, firstJump = '';
+  for (var i = 0; i <= 5000; i++) {
+    var p = i / 5000, r = C.pathAt(p, vp);
     if (desktop) {
       if (p >= vp.stops[1] && visible(r) && !outsideColumn(r)) onColumn++;
     } else if (!inStage(r)) outStage++;
-    if (prev && visible(prev) && visible(r) && Math.hypot(r.x - prev.x, r.y - prev.y) > 40) jumps++;
+    if (prev && visible(prev) && visible(r) && Math.hypot(r.x - prev.x, r.y - prev.y) > 40) {
+      jumps++;
+      firstJump = firstJump || ' dès p=' + p + ' ' + fmt(prev) + ' → ' + fmt(r);
+    }
     prev = r;
   }
-  ok(jumps === 0, tag + 'trajet continu à l\'écran (' + jumps + ' sauts)');
+  ok(jumps === 0, tag + 'trajet continu à l\'écran (' + jumps + ' sauts' + firstJump + ')');
   if (desktop) ok(onColumn === 0, tag + 'hors hero, jamais sur la colonne (' + onColumn + ' points)');
   else ok(outStage === 0, tag + 'toujours dans #stage (' + outStage + ' points dehors)');
 
@@ -115,7 +122,8 @@ async function checkSize(W, H, reduced) {
   // --- Poses par section, dans les deux sens ---------------------------------
   var ids = Object.keys(POSES);
   function sectionY(id) { return Math.min(ST.maxScroll(win), doc.getElementById(id).offsetTop - H / 2 + 20); }
-  function go(y) { win.scrollTo(0, y); doc.dispatchEvent(new win.Event('scroll')); ST.update(); }
+  // behavior: instant, sinon scroll-behavior: smooth anime le scroll (frames absentes en temps virtuel).
+  function go(y) { win.scrollTo({ top: y, behavior: 'instant' }); doc.dispatchEvent(new win.Event('scroll')); ST.update(); }
   var caseyBox = doc.getElementById('casey');
   var t0 = caseyBox.style.transform;
   var sawWalking = false;
