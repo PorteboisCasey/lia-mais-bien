@@ -190,9 +190,10 @@ Testé par `tests/test_decors.py` :
 
 Relecture humaine (non testé) :
 - **Zone essentielle horizontale** : x de 550 à 1050. C'est tout ce qu'on voit à 375 px.
-- **Zone visible verticale à 375 px** : haut y de 0 à `N`, bas y de `M` à 180. **`N` et `M` sont mesurés et écrits ici par l'agent 4** (hors de cette zone, la carte cache le dessin) : `N = À MESURER`, `M = À MESURER`.
+- **Zone visible verticale à 375 px** : haut y de 0 à `N`, bas y de `M` à 180. **`N` et `M` sont mesurés et écrits ici par l'agent 4** (hors de cette zone, la carte cache le dessin) : `N = 88`, `M = 108`. Mesuré à 375 px : carte à 64 px sous le haut de la bande de 160 px, et à 52 px au-dessus du bas de la bande de 120 px, moins les 4 px de son ombre. Sur desktop, la zone visible est plus grande (haut jusqu'à y = 120, bas à partir de y = 80), mais la carte couvre alors x de 504 à 1096 : l'essentiel doit donc tenir dans la zone `N`/`M`.
 - **Décor de bord** (x < 550 et x > 1050) : grands aplats, peu de traits, rien de dense. Sur desktop, Casey marche devant.
 - La bande du haut est transparente là où rien n'est dessiné ; la bande du bas peint son sol sur toute sa largeur, de la couleur `--floor-<id>`.
+- **Ligne de sol** : le sol de la bande du bas est un rectangle qui commence à **y = 130** (trait de 3 en haut, il descend sous 180), par exemple `<rect x="-10" y="130" width="1620" height="60" fill="<floor>"/>`. La couche sol du CSS reprend ces proportions au-delà de 1600 px.
 
 ### C6. Guide de style des décors
 
@@ -212,6 +213,11 @@ Relecture humaine (non testé) :
 | Gris clair / moyen | `#e9e9ee` `#bfc3cc` |
 | Bleu nuit (soir) / ciel soir | `#3d4a7a` `#f7c6a3` |
 | Accent | `#ff4d00` |
+| Cerisier clair / foncé | `#f6b8c8` `#ee8fa8` |
+| Tuile, dos de livre rouge | `#e8907a` |
+| Bleu casier, couette, dos de livre | `#a8c8e8` |
+| Lumière : lampe, guirlande, néon | `#ffd66b` |
+| Lavande : dos de livre, post-it | `#c9bfe8` |
 
 ## Ressources partagées
 

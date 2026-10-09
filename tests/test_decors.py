@@ -23,6 +23,11 @@ PALETTE = {
     "#e9e9ee", "#bfc3cc",                                               # gris clair / moyen
     "#3d4a7a", "#f7c6a3",                                               # bleu nuit / ciel du soir
     "#ff4d00",                                                          # accent
+    "#f6b8c8", "#ee8fa8",                                               # cerisier clair / foncé
+    "#e8907a",                                                          # tuile, dos de livre rouge
+    "#a8c8e8",                                                          # bleu casier, couette, dos de livre
+    "#ffd66b",                                                          # lumière : lampe, guirlande, néon
+    "#c9bfe8",                                                          # lavande : dos de livre, post-it
 }
 
 FORBIDDEN_TAGS = {"text", "image", "filter", "foreignObject", "script", "style", "pattern",
