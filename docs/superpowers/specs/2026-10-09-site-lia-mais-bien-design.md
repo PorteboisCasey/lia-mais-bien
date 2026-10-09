@@ -14,7 +14,7 @@ Une affiche est collée dans la rue à Marseille. Un passant (élève ou parent)
 |---|---|
 | Public | Universel : élèves et parents, de la 6e à la Terminale (collégiens + lycéens) |
 | Tarif | 30 € la séance. **Pas** de séance découverte |
-| Lieu | À domicile (Marseille) ou en visio |
+| Lieu | À domicile uniquement (Marseille), pas de visio. Séance de 1h à 1h30, paiement espèces ou Lydia. Tutoiement. |
 | Contact | WhatsApp pré-rempli vers `+33609148090`, numéro affiché en clair |
 | Formulaire | Je suis : élève / parent · Niveau : collège / lycée · question libre |
 | Hébergement | GitHub Pages |
@@ -35,7 +35,7 @@ Une seule page en scrollytelling. **Casey** est fixé à l'écran (`position: fi
 |---|---|---|---|---|
 | 1 | `hero` | « **Tout le monde** utilise déjà l'IA. **Autant l'utiliser bien.** » + sous-titre « Des séances particulières pour collégiens et lycéens, avec quelqu'un dont c'est le métier. » | Titre mot par mot, trait ondulé dessiné, éclats « shine », flèche « scrolle » qui rebondit | `sit` sur la bulle du titre, salue |
 | 2 | `apprendre` | Les 3 promesses de l'affiche | Au scroll, chaque case se coche (trait orange dessiné via `stroke-dashoffset`) | `point` vers la ligne active |
-| 3 | `infos` | Stickers : « De la 6e à la Terminale » · « 30 € la séance » · « À domicile ou en visio · Marseille » | Les stickers tombent, rebondissent et gardent leur inclinaison | `walk` puis `idle` |
+| 3 | `infos` | Stickers : « De la 6e à la Terminale » · « 30 € la séance » · « À domicile · Marseille » | Les stickers tombent, rebondissent et gardent leur inclinaison | `walk` puis `idle` |
 | 4 | `moi` | « C'est moi ! » Casey, alternant en IA dans un grand groupe marseillais + numéro | Bulle « C'est moi ! » manuscrite qui pop | `wave` |
 | 5 | `faq` | Accordéon (voir §5) | Ouverture/fermeture fluide | `think` (main au menton) |
 | 6 | `question` | Formulaire → WhatsApp | Choix en gros boutons-stickers | `phone` (tient un téléphone), puis `party` à l'envoi |
@@ -57,9 +57,10 @@ Il est reconstruit à partir des SVG de l'affiche (`#head`, `#sit`, `#stand`) et
 **FAQ** (réponses proposées, à valider) :
 
 - **C'est pas de la triche ?** Non. Justement, on apprend à s'en servir pour comprendre un cours, pas pour faire le devoir à ta place.
-- **Il faut un ordi ?** Un ordi ou une tablette, c'est mieux. En visio, il suffit d'avoir une connexion.
+- **Il faut un ordi ?** C'est mieux d'avoir le tien, pour qu'on bosse sur ta machine. Et de toute façon, je ramène mon Mac.
 - **Ça se passe comment, une séance ?** On part de tes cours et de tes devoirs du moment, on pratique ensemble et tu repars avec des méthodes réutilisables.
-- **Combien ça coûte ?** 30 € la séance, à domicile à Marseille ou en visio.
+- **Ça dure combien de temps ?** Entre 1h et 1h30, selon ce qu'on a à voir.
+- **Combien ça coûte ?** 30 € la séance, à domicile à Marseille. Tu paies en espèces ou par Lydia.
 - **Quels niveaux ?** De la 6e à la Terminale.
 
 **Message WhatsApp généré :**
