@@ -38,22 +38,12 @@ main {
 section { padding: 40px 0; scroll-margin-top: 8px; }
 
 /* --- Hero --- */
-#hero { position: relative; isolation: isolate; padding-top: 28px; }
-/* Lignes de vitesse derrière la bulle, effacées au centre et sur les bords */
-#hero::before {
-  content: "";
-  position: absolute;
-  inset: 0 -16px;
-  z-index: -1;
-  background:
-    repeating-conic-gradient(from 4deg at 50% 45%, var(--accent) 0 1.2deg, transparent 1.2deg 41deg),
-    repeating-conic-gradient(at 50% 45%, rgb(17 17 17 / .22) 0 1.2deg, transparent 1.2deg 7deg);
-  -webkit-mask-image: radial-gradient(closest-side at 50% 45%, transparent 35%, #000 60%, transparent 100%);
-  mask-image: radial-gradient(closest-side at 50% 45%, transparent 35%, #000 60%, transparent 100%);
-  pointer-events: none;
-}
+#hero { position: relative; padding-top: 28px; }
 .kicker {
+  position: relative;
   margin-bottom: 16px;
+  /* Détourage papier, comme le lettrage posé sur une trame de manga */
+  text-shadow: 0 0 3px var(--paper), 0 0 3px var(--paper), 0 0 6px var(--paper);
   font-family: var(--font-hand);
   font-size: 1.6rem;
   line-height: 1;
@@ -69,7 +59,21 @@ section { padding: 40px 0; scroll-margin-top: 8px; }
   height: 2px;
   pointer-events: none;
 }
-.hero-bubble { position: relative; }
+.hero-bubble { position: relative; isolation: isolate; }
+/* Lignes de vitesse autour de la bulle ; elles s'arrêtent avant le sous-titre (.sub est à 28px).
+   Angles diviseurs de 360° pour un motif régulier ; décalage de 3° : orange et noir ne se superposent jamais. */
+.hero-bubble::before {
+  content: "";
+  position: absolute;
+  inset: -48px -16px -20px;
+  z-index: -1;
+  background:
+    repeating-conic-gradient(from 3deg, var(--accent) 0 1.2deg, transparent 1.2deg 40deg),
+    repeating-conic-gradient(rgb(17 17 17 / .14) 0 1deg, transparent 1deg 6deg);
+  -webkit-mask-image: radial-gradient(closest-side, transparent 55%, #000 80%, transparent 100%);
+  mask-image: radial-gradient(closest-side, transparent 55%, #000 80%, transparent 100%);
+  pointer-events: none;
+}
 
 h1 {
   margin: 0;
@@ -277,7 +281,7 @@ h1 .hl { color: var(--accent); }
   #stage { display: none; }
   main { padding-inline: 24px; }
   #hero { padding-top: 120px; } /* place pour Casey assis au-dessus de la bulle */
-  #hero::before { inset: 0 -120px; }
+  .hero-bubble::before { inset: -64px -80px -20px; }
   #casey { width: 72px; }
   #wa-float { right: 28px; bottom: 28px; }
   .stickers { gap: 22px; }
