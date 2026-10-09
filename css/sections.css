@@ -1,7 +1,8 @@
 /* Mise en page : mobile d'abord. Tout est visible par défaut (pas d'opacity: 0). */
 *, *::before, *::after { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+/* clip et non hidden : pas de conteneur de scroll, ScrollTrigger reste sur la fenêtre */
+html { -webkit-text-size-adjust: 100%; overflow-x: clip; }
 @media (prefers-reduced-motion: no-preference) {
   html { scroll-behavior: smooth; }
 }
@@ -9,8 +10,7 @@ html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
   padding-bottom: 96px; /* hauteur de #stage */
-  /* Trame manga : points d'encre légers ; bulles et stickers gardent leur fond papier */
-  background: var(--paper) radial-gradient(rgb(17 17 17 / .14) 1.2px, transparent 1.6px) 0 0 / 12px 12px;
+  background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
   font-size: 1.0625rem;
@@ -35,15 +35,78 @@ main {
   margin-inline: auto;
   padding-inline: 16px;
 }
-section { padding: 40px 0; scroll-margin-top: 8px; }
+/* Cases de manga : chaque section déborde de main (qui reste la colonne de 640 px mesurée par la
+   chorégraphie) ; le padding horizontal recentre la carte sur la colonne. */
+section {
+  --pad-top: 64px;    /* mobile serré : le public arrive par le QR code */
+  --pad-bottom: 52px;
+  margin: 12px calc(50% - 50vw);
+  padding: var(--pad-top) calc(50vw - 50%) var(--pad-bottom);
+  border-block: calc(var(--line) * 1.5) solid var(--ink);
+  scroll-margin-top: 8px;
+}
+.card {
+  padding: 16px 14px;
+  border: var(--line) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+/* Décors (C1) : bande du haut, bande du bas, sol pleine largeur (écrans > 1600 px), aplat.
+   Le sol des SVG du bas commence à y = 130 sur 180 (trait de 3) : la couche sol reprend ces proportions. */
+#hero, #apprendre, #infos, #moi, #faq, #question {
+  --floor-line: calc(var(--band-bottom) * 3 / 180);
+  --floor-h: calc(var(--band-bottom) * 51.5 / 180);
+}
+#hero {
+  background:
+    url(../assets/decors/hero-haut.svg) top center / auto var(--band-top) no-repeat,
+    url(../assets/decors/hero-bas.svg) bottom center / auto var(--band-bottom) no-repeat,
+    linear-gradient(var(--ink) 0 var(--floor-line), var(--floor-hero) 0) bottom / 100% var(--floor-h) no-repeat,
+    var(--decor-hero);
+}
+#apprendre {
+  background:
+    url(../assets/decors/apprendre-haut.svg) top center / auto var(--band-top) no-repeat,
+    url(../assets/decors/apprendre-bas.svg) bottom center / auto var(--band-bottom) no-repeat,
+    linear-gradient(var(--ink) 0 var(--floor-line), var(--floor-apprendre) 0) bottom / 100% var(--floor-h) no-repeat,
+    var(--decor-apprendre);
+}
+#infos {
+  background:
+    url(../assets/decors/infos-haut.svg) top center / auto var(--band-top) no-repeat,
+    url(../assets/decors/infos-bas.svg) bottom center / auto var(--band-bottom) no-repeat,
+    linear-gradient(var(--ink) 0 var(--floor-line), var(--floor-infos) 0) bottom / 100% var(--floor-h) no-repeat,
+    var(--decor-infos);
+}
+#moi {
+  background:
+    url(../assets/decors/moi-haut.svg) top center / auto var(--band-top) no-repeat,
+    url(../assets/decors/moi-bas.svg) bottom center / auto var(--band-bottom) no-repeat,
+    linear-gradient(var(--ink) 0 var(--floor-line), var(--floor-moi) 0) bottom / 100% var(--floor-h) no-repeat,
+    var(--decor-moi);
+}
+#faq {
+  background:
+    url(../assets/decors/faq-haut.svg) top center / auto var(--band-top) no-repeat,
+    url(../assets/decors/faq-bas.svg) bottom center / auto var(--band-bottom) no-repeat,
+    linear-gradient(var(--ink) 0 var(--floor-line), var(--floor-faq) 0) bottom / 100% var(--floor-h) no-repeat,
+    var(--decor-faq);
+}
+#question {
+  background:
+    url(../assets/decors/question-haut.svg) top center / auto var(--band-top) no-repeat,
+    url(../assets/decors/question-bas.svg) bottom center / auto var(--band-bottom) no-repeat,
+    linear-gradient(var(--ink) 0 var(--floor-line), var(--floor-question) 0) bottom / 100% var(--floor-h) no-repeat,
+    var(--decor-question);
+}
 
 /* --- Hero --- */
-#hero { position: relative; padding-top: 28px; }
+#hero { position: relative; }
+#hero .card { border: 0; box-shadow: none; } /* la bulle fait déjà cadre : pas de double cadre */
 .kicker {
-  position: relative;
   margin-bottom: 16px;
-  /* Détourage papier, comme le lettrage posé sur une trame de manga */
-  text-shadow: 0 0 3px var(--paper), 0 0 3px var(--paper), 0 0 6px var(--paper);
   font-family: var(--font-hand);
   font-size: 1.6rem;
   line-height: 1;
@@ -59,21 +122,7 @@ section { padding: 40px 0; scroll-margin-top: 8px; }
   height: 2px;
   pointer-events: none;
 }
-.hero-bubble { position: relative; isolation: isolate; }
-/* Lignes de vitesse autour de la bulle ; elles s'arrêtent avant le sous-titre (.sub est à 28px).
-   Angles diviseurs de 360° pour un motif régulier ; décalage de 3° : orange et noir ne se superposent jamais. */
-.hero-bubble::before {
-  content: "";
-  position: absolute;
-  inset: -48px -16px -20px;
-  z-index: -1;
-  background:
-    repeating-conic-gradient(from 3deg, var(--accent) 0 1.2deg, transparent 1.2deg 40deg),
-    repeating-conic-gradient(rgb(17 17 17 / .14) 0 1deg, transparent 1deg 6deg);
-  -webkit-mask-image: radial-gradient(closest-side, transparent 55%, #000 80%, transparent 100%);
-  mask-image: radial-gradient(closest-side, transparent 55%, #000 80%, transparent 100%);
-  pointer-events: none;
-}
+.hero-bubble { position: relative; }
 
 h1 {
   margin: 0;
@@ -280,8 +329,8 @@ h1 .hl { color: var(--accent); }
   body { padding: 0 140px; } /* gouttières réservées */
   #stage { display: none; }
   main { padding-inline: 24px; }
-  #hero { padding-top: 120px; } /* place pour Casey assis au-dessus de la bulle */
-  .hero-bubble::before { inset: -64px -80px -20px; }
+  section { --pad-top: 120px; --pad-bottom: 104px; } /* le hero garde ses 120 px : place pour Casey assis au-dessus de la bulle */
+  .card { padding: 28px 28px; }
   #casey { width: 72px; }
   #wa-float { right: 28px; bottom: 28px; }
   .stickers { gap: 22px; }

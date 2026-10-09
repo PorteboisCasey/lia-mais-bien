@@ -148,7 +148,8 @@ async function checkSize(W, H, reduced) {
   }
   // face() suit le sens du déplacement : il s'inverse quand on inverse le scroll.
   if (!reduced) {
-    var mid = doc.getElementById('apprendre').offsetTop + 20;
+    // Au milieu du segment d'apprendre (entre deux stops) : aucune frontière de segment dans la fenêtre de 60 px.
+    var mid = Math.round((vp.stops[1] + vp.stops[2]) / 2 * vp.scrollMax) - 30;
     for (s = 1; s <= 4; s++) { go(mid + s * 15); await wait(16); }
     var faceDown = svg.getAttribute('data-face');
     for (s = 1; s <= 4; s++) { go(mid + 60 - s * 15); await wait(16); }

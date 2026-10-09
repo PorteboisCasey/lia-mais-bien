@@ -12,6 +12,25 @@
   --font-display: "Lilita One", "Arial Rounded MT Bold", sans-serif;
   --font-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
   --font-hand: "Gochi Hand", cursive;
+
+  /* Décors (C1, C5) : aplat de chaque case, couleur de son sol, hauteur des bandes SVG */
+  --decor-hero: #cde8f6;
+  --decor-apprendre: #ddefe3;
+  --decor-infos: #fff3c9;
+  --decor-moi: #e6e1f5;
+  --decor-faq: #f5e6d3;
+  --decor-question: #fbe1e3;
+  --floor-hero: #e9e9ee;
+  --floor-apprendre: #ebcfa8;
+  --floor-infos: #e9e9ee;
+  --floor-moi: #ebcfa8;
+  --floor-faq: #c99b6b;
+  --floor-question: #c99b6b;
+  --band-top: 160px;
+  --band-bottom: 120px;
+}
+@media (min-width: 1024px) {
+  :root { --band-top: 220px; --band-bottom: 180px; }
 }
 
 /* Bulle de BD (cadre du titre) */
