@@ -8,12 +8,12 @@
 (function () {
   var POSES = ['sit', 'idle', 'walk', 'point', 'wave', 'think', 'phone', 'party'];
 
-  // --- Géométrie du rig (coordonnées du #stand de l'affiche) ---------------
+  // --- Géométrie du rig (piste C « jeunesse », même cadre que le #stand de l'affiche) ---
 
   // Bras au repos : épaule S, coude E, main H.
   var ARM = {
-    L: { S: [7, 32], E: [3, 39], H: [4, 46.4] },
-    R: { S: [24, 33], E: [28, 40], H: [26, 47] }
+    L: { S: [6.5, 32], E: [2.5, 39], H: [3.5, 46.5] },
+    R: { S: [23.5, 32], E: [27.5, 39], H: [26, 46.5] }
   };
 
   function angle(a, b) { return Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI; }
@@ -38,6 +38,11 @@
     mouth: { scaleX: 1, scaleY: 1 },
     smile: { autoAlpha: 1 },
     open: { autoAlpha: 0 },
+    mouthO: { autoAlpha: 0 },     // bouche en « o » (réflexion)
+    dot: { autoAlpha: 1 },        // yeux ronds
+    happy: { autoAlpha: 0 },      // yeux rieurs ^ ^
+    brows: { y: 0 },
+    browL: { rotation: 0 }, browR: { rotation: 0 },
     torso: { scaleY: 1 },
     armL: { rotation: 0 }, foreL: { rotation: 0 },
     armR: { rotation: 0 }, foreR: { rotation: 0 },
@@ -60,25 +65,27 @@
     },
     point: {
       R: [[31.5, 34], [39, 32.5]],
-      head: { rotation: -3, y: 0 }, eyes: { x: 1.5, y: 0, scaleY: 1 }
+      head: { rotation: -3, y: 0 }, eyes: { x: 1.5, y: 0, scaleY: 1 }, brows: { y: -0.6 }
     },
     wave: {
-      R: [[31, 31], [37, 24]],
-      head: { rotation: -4, y: 0 }, eyes: { x: 1, y: 0, scaleY: 1 }
+      R: [[31, 29], [36, 22]],
+      head: { rotation: -5, y: 0 }, eyes: { x: 1, y: 0, scaleY: 1 }, brows: { y: -1 },
+      dot: { autoAlpha: 0 }, happy: { autoAlpha: 1 }, smile: { autoAlpha: 0 }, open: { autoAlpha: 1 }
     },
     think: {
-      R: [[31, 37.5], [25, 30.5]],
-      head: { rotation: -5, y: 1.5 }, eyes: { x: -0.6, y: -2.6, scaleY: 1 },
-      mouth: { scaleX: 0.55, scaleY: 0.35 }
+      R: [[31, 37], [24, 31]],
+      head: { rotation: -6, y: 1.2 }, eyes: { x: -0.8, y: -2, scaleY: 1 },
+      brows: { y: -0.5 }, browL: { rotation: 10 }, browR: { rotation: -14 },
+      smile: { autoAlpha: 0 }, mouthO: { autoAlpha: 1 }
     },
     phone: {
-      R: [[31.5, 40.5], [36, 31.5]], phone: { autoAlpha: 1 },
-      head: { rotation: 6, y: 0 }, eyes: { x: 1.4, y: 1, scaleY: 1 }
+      R: [[31.5, 40], [36, 31]], phone: { autoAlpha: 1 },
+      head: { rotation: 6, y: 0 }, eyes: { x: 1.3, y: 1, scaleY: 1 }, brows: { y: 0.6 }
     },
     party: {
       L: [[0, 27], [-7, 21]], R: [[31, 28], [38, 21]],
-      tablet: { autoAlpha: 0 }, head: { rotation: 0, y: -1 },
-      eyes: { x: 0, y: 0, scaleY: 0.55 }, smile: { autoAlpha: 0 }, open: { autoAlpha: 1 },
+      tablet: { autoAlpha: 0 }, head: { rotation: 0, y: -1 }, brows: { y: -1.2 },
+      dot: { autoAlpha: 0 }, happy: { autoAlpha: 1 }, smile: { autoAlpha: 0 }, open: { autoAlpha: 1 },
       sparks: { autoAlpha: 1, scale: 1 }
     }
   };
@@ -100,46 +107,82 @@
   // Le téléphone est contre-tourné pour être droit quand le bras est en pose « phone ».
   var phoneTilt = -(PROPS.phone.armR.rotation + PROPS.phone.foreR.rotation);
 
+  // Couleurs de la piste C (voir « Casey look » dans AGENTS.md).
+  var INK = '#111', ORANGE = '#FF4D00', SKIN = '#f9d5b8', HOOD = '#a8c8e8', HOOD_LIGHT = '#cfe0f2',
+    JEAN = '#3d4a7a', LENS = '#eef5fb', BLUSH = '#f6b8c8', TONGUE = '#ee8fa8', TABLET = '#c9bfe8';
+
+  // Membre cerné : trait noir épais, puis trait de couleur par-dessus (comme les pieds de chaise des décors).
+  function limb(d, color, w) {
+    return '<path d="' + d + '" stroke-width="' + (w + 2.4) + '"/>' +
+      '<path d="' + d + '" stroke="' + color + '" stroke-width="' + w + '"/>';
+  }
+  // Basket, pointe à droite, centrée vers x = 24, semelle orange à y = 74.
+  var SHOE =
+    '<path d="M17.6 72.6 V69.6 Q17.9 66.8 21.2 67 L25 67.6 Q30.8 68.4 31 71.4 V72.6 Z" fill="#fff"/>' +
+    '<rect x="17" y="71.6" width="14.6" height="2.8" rx="1.4" fill="' + ORANGE + '"/>';
+
   var SVG =
     '<svg class="casey" viewBox="-12 -14 62 90" fill="none" stroke="#111" stroke-width="2.2"' +
     ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
     '<g class="casey-flip"><g class="casey-jump"><g class="casey-bob">' +
-    '<g data-part="legL"><g class="swing"><path d="M10 54 V68" stroke-width="4.2"/>' +
-      '<g class="foot"><g class="stride"><ellipse cx="7" cy="70.5" rx="6.5" ry="3.4" fill="#111"/></g></g></g></g>' +
-    '<g data-part="legR"><g class="swing"><path d="M20 54 V68" stroke-width="4.2"/>' +
-      '<ellipse cx="24" cy="70.5" rx="6.5" ry="3.4" fill="#111"/></g></g>' +
-    '<g data-part="torso"><rect x="5" y="29" width="20" height="21" rx="3" fill="#FF4D00"/>' +
-      '<rect x="5.5" y="48" width="19" height="7" rx="2" fill="#111"/></g>' +
+    '<g data-part="legL"><g class="swing">' + limb('M10 53 V68', JEAN, 3.6) +
+      '<g class="foot"><g class="stride"><g transform="translate(31 0) scale(-1 1)">' + SHOE + '</g></g></g></g></g>' +
+    '<g data-part="legR"><g class="swing">' + limb('M20 53 V68', JEAN, 3.6) + SHOE + '</g></g>' +
+    '<g data-part="torso">' +
+      '<rect x="5" y="47" width="20" height="8" rx="2.5" fill="' + JEAN + '"/>' +
+      '<rect x="4" y="28" width="22" height="22" rx="6" fill="' + HOOD + '"/>' +
+      '<path d="M6.5 30 Q15 38.5 23.5 30" fill="' + HOOD_LIGHT + '" stroke-width="1.6"/>' +
+      '<path d="M12.6 33.2 V37.6 M17.4 33.2 V37.6" stroke="' + ORANGE + '" stroke-width="1.5"/>' +
+      '<path d="M9 41.5 H21 L20 46.5 H10 Z" stroke-width="1.4"/></g>' +
     '<g data-part="head">' +
-      '<path d="M1 10 L-7 5 L-2 12 L-9 15 L0 18" fill="#111"/>' +
-      '<rect x="0" y="0" width="30" height="28" rx="3" fill="#fff"/>' +
-      '<path d="M-1 10 C-1 -6 31 -6 31 10 Z" fill="#FF4D00"/>' +
-      '<path d="M22 10 H41 C40 14 31 14 24 13 Z" fill="#111"/>' +
-      '<path d="M11 -4 L9 -11 L14 -6 L19 -10 L18 -4" fill="#111"/>' +
-      '<rect x="4" y="13" width="9.5" height="7.5" rx="1" fill="#fff"/>' +
-      '<rect x="17" y="13" width="9.5" height="7.5" rx="1" fill="#fff"/>' +
-      '<path d="M13.5 16 H17"/>' +
+      '<path d="M0 10 L-6.5 6.5 L-3 12 L-8 15 L-1 17.5" fill="' + INK + '"/>' +
+      '<circle cx="0.4" cy="18.6" r="3.2" fill="' + SKIN + '"/>' +
+      '<rect x="-0.5" y="0" width="31.5" height="29" rx="12" fill="' + SKIN + '"/>' +
+      '<path d="M1.4 10.6 L4.5 14.2 L6.5 10.8 L8.6 13.4 L10 10.6" fill="' + INK + '" stroke-width="1.4"/>' +
+      '<ellipse cx="6" cy="24" rx="2.5" ry="1.5" fill="' + BLUSH + '" stroke="none"/>' +
+      '<ellipse cx="28.2" cy="24" rx="2.5" ry="1.5" fill="' + BLUSH + '" stroke="none"/>' +
+      '<path d="M-2 10.5 C-2 -6.5 32 -6.5 32 10.5 Z" fill="' + ORANGE + '"/>' +
+      '<path d="M14.6 -2 Q16.8 4 15.8 10.5" stroke-width="1.2"/>' +
+      '<path d="M23 10.5 H42 C41 15 32 15 25 14 Z" fill="' + INK + '"/>' +
+      '<path d="M11 -3.5 L9 -10.5 L14 -5.5 L19 -9.5 L18 -3.5" fill="' + INK + '"/>' +
+      '<g class="brows" stroke-width="1.7">' +
+        '<path class="browL" d="M9.4 12.6 Q11.5 11.7 13.6 12.4"/>' +
+        '<path class="browR" d="M20.9 12.4 Q23 11.7 25.1 12.6"/></g>' +
+      '<circle cx="11.5" cy="18.8" r="4.4" fill="' + LENS + '" stroke-width="1.9"/>' +
+      '<circle cx="23" cy="18.8" r="4.4" fill="' + LENS + '" stroke-width="1.9"/>' +
+      '<path d="M15.9 18.4 Q17.25 17.4 18.6 18.4" stroke-width="1.6"/>' +
       '<g data-part="eyes"><g class="blink">' +
-        '<circle cx="10" cy="17" r="1.5" fill="#111" stroke="none"/>' +
-        '<circle cx="23" cy="17" r="1.5" fill="#111" stroke="none"/></g></g>' +
-      '<g data-part="mouth"><path class="smile" d="M10 24.5 Q16 28.5 22 23.5"/>' +
-        '<path class="open" d="M10 23.2 Q16 31 22 22.4 Z" fill="#111"/></g>' +
+        '<g class="eyes-dot"><circle cx="12" cy="19.2" r="1.7" fill="' + INK + '" stroke="none"/>' +
+          '<circle cx="23.5" cy="19.2" r="1.7" fill="' + INK + '" stroke="none"/>' +
+          '<circle cx="12.6" cy="18.5" r="0.55" fill="#fff" stroke="none"/>' +
+          '<circle cx="24.1" cy="18.5" r="0.55" fill="#fff" stroke="none"/></g>' +
+        '<g class="eyes-happy" stroke-width="1.7"><path d="M10 19.8 Q12 17.2 14 19.8 M21.5 19.8 Q23.5 17.2 25.5 19.8"/></g>' +
+      '</g></g>' +
+      '<path d="M17.6 21.6 Q16.6 23.2 18 23.6" stroke-width="1.3"/>' +
+      '<g data-part="mouth"><path class="smile" d="M13 25.6 Q17.4 29 21.8 25.2"/>' +
+        '<g class="open"><path d="M12.6 25 Q17.4 31.8 22.2 24.6 Z" fill="' + INK + '"/>' +
+          '<path d="M15 27.8 Q17.4 26.6 19.8 27.6 Q17.6 29.6 15 27.8 Z" fill="' + TONGUE + '" stroke="none"/></g>' +
+        '<ellipse class="mouth-o" cx="17.4" cy="26.4" rx="1.4" ry="1.7" fill="' + INK + '" stroke-width="1"/></g>' +
     '</g>' +
     '<g data-part="laptop"><rect x="-1" y="35" width="19" height="13.5" rx="1.5" fill="#fff"/>' +
-      '<circle cx="8.5" cy="41.7" r="1.6" fill="#FF4D00" stroke="none"/>' +
+      '<circle cx="8.5" cy="41.7" r="1.6" fill="' + ORANGE + '" stroke="none"/>' +
       '<path d="M2 48.5 H22" stroke-width="3"/></g>' +
     '<g data-part="armL"><g class="swing">' +
-      '<g class="tablet"><rect x="-6" y="34" width="12" height="18" rx="1.5" fill="#fff" transform="rotate(-12 0 43)"/></g>' +
-      '<path d="M7 32 Q4 35 3 39"/>' +
-      '<g class="fore"><path d="M3 39 Q3 43 4 46.4"/><circle cx="4" cy="47" r="2.6" fill="#fff"/></g>' +
+      '<g class="tablet"><g transform="rotate(-12 0 43)">' +
+        '<rect x="-6.5" y="34" width="12" height="18" rx="2" fill="' + TABLET + '"/>' +
+        '<rect x="-4.5" y="36.5" width="8" height="12" rx="1" fill="#fff" stroke-width="1.3"/>' +
+        '<path d="M-2.5 40 H2 M-2.5 43 H0.8" stroke="' + ORANGE + '" stroke-width="1.3"/></g></g>' +
+      limb('M6.5 32 Q3.5 35 2.5 39', HOOD, 3) +
+      '<g class="fore">' + limb('M2.5 39 Q2.6 42.5 3.4 45', HOOD, 3) +
+        '<circle cx="3.5" cy="47" r="2.6" fill="' + SKIN + '"/></g>' +
     '</g></g>' +
     '<g data-part="armR"><g class="swing">' +
-      '<path d="M24 33 Q27 36 28 40"/>' +
-      '<g class="fore"><path d="M28 40 Q27.5 44 26 47"/>' +
-        '<g data-part="phone" transform="translate(26 48) rotate(' + phoneTilt.toFixed(2) + ')">' +
-          '<rect x="-3.4" y="-12.5" width="6.8" height="11.5" rx="1.4" fill="#111"/>' +
-          '<rect x="-2" y="-11" width="4" height="7" rx="0.6" fill="#FF4D00" stroke="none"/></g>' +
-        '<circle cx="26" cy="48" r="2.6" fill="#fff"/></g>' +
+      limb('M23.5 32 Q26.5 35 27.5 39', HOOD, 3) +
+      '<g class="fore">' + limb('M27.5 39 Q27.3 42.5 26.4 45', HOOD, 3) +
+        '<g data-part="phone" transform="translate(26 47.5) rotate(' + phoneTilt.toFixed(2) + ')">' +
+          '<rect x="-3.4" y="-12.5" width="6.8" height="11.5" rx="1.4" fill="' + INK + '"/>' +
+          '<rect x="-2" y="-11" width="4" height="7" rx="0.6" fill="' + ORANGE + '" stroke="none"/></g>' +
+        '<circle cx="26" cy="47" r="2.6" fill="' + SKIN + '"/></g>' +
     '</g></g>' +
     '<g class="sparks" stroke-width="2.6"><path d="M-6 -4 L-12 -8 M0 -12 L-3 -18 M34 -9 L37 -15 M41 -2 L47 -5"/></g>' +
     '</g></g></g></svg>';
@@ -147,18 +190,24 @@
   // Cibles par clé, et pivot (svgOrigin, en coordonnées du rig).
   var PARTS = {
     head: ['[data-part="head"]', '15 29'],
-    eyes: ['[data-part="eyes"]', '16.5 17'],
-    blink: ['.blink', '16.5 17'],
-    mouth: ['[data-part="mouth"]', '16 25'],
+    eyes: ['[data-part="eyes"]', '17.75 19.2'],
+    blink: ['.blink', '17.75 19.2'],
+    dot: ['.eyes-dot'],
+    happy: ['.eyes-happy'],
+    brows: ['.brows'],
+    browL: ['.browL', '11.5 12.3'],
+    browR: ['.browR', '23 12.3'],
+    mouth: ['[data-part="mouth"]', '17.4 26.4'],
     smile: ['.smile'],
     open: ['.open'],
+    mouthO: ['.mouth-o'],
     torso: ['[data-part="torso"]', '15 55'],
-    armL: ['[data-part="armL"]', '7 32'],
-    swingArmL: ['[data-part="armL"] > .swing', '7 32'],
-    foreL: ['[data-part="armL"] .fore', '3 39'],
-    armR: ['[data-part="armR"]', '24 33'],
-    swingArmR: ['[data-part="armR"] > .swing', '24 33'],
-    foreR: ['[data-part="armR"] .fore', '28 40'],
+    armL: ['[data-part="armL"]', '6.5 32'],
+    swingArmL: ['[data-part="armL"] > .swing', '6.5 32'],
+    foreL: ['[data-part="armL"] .fore', '2.5 39'],
+    armR: ['[data-part="armR"]', '23.5 32'],
+    swingArmR: ['[data-part="armR"] > .swing', '23.5 32'],
+    foreR: ['[data-part="armR"] .fore', '27.5 39'],
     legL: ['[data-part="legL"]', '10 54'],
     swingLegL: ['[data-part="legL"] > .swing', '10 54'],
     footL: ['[data-part="legL"] .foot', '10 70.5'],
