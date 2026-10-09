@@ -9,12 +9,13 @@
 <body>
 <div id="host" style="width:120px"></div>
 <pre id="result"></pre>
+<p id="step"></p>
 <script>
 /* Une seule page, deux passes : la page lit elle-même prefers-reduced-motion.
    run.sh la lance une fois normalement, une fois avec --force-prefers-reduced-motion. */
 window.addEventListener('load', async function () {
   var fails = [];
-  function ok(cond, msg) { if (!cond) fails.push(msg); }
+  function ok(cond, msg) { document.getElementById('step').textContent = msg; if (!cond) fails.push(msg); }
   function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
   // Résout true si p se résout avant ms, false sinon.
   function within(p, ms) {
@@ -32,6 +33,11 @@ window.addEventListener('load', async function () {
     return cs.visibility !== 'hidden' && cs.display !== 'none' && parseFloat(cs.opacity) > 0.9;
   }
 
+  // Chrome headless en temps virtuel (--virtual-time-budget) ne déclenche pas
+  // requestAnimationFrame : on cadence le ticker de GSAP à la main, via setInterval
+  // (que le temps virtuel fait avancer), sans lissage du retard.
+  gsap.ticker.lagSmoothing(0);
+  setInterval(function () { gsap.ticker.tick(); }, 16);
   try {
     var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     var C = window.Casey;
