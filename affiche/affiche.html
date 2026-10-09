@@ -94,14 +94,18 @@
   .name { font-size: 11mm; line-height: 1; }
   .who { margin: 1mm 0 4mm; font-size: 4.6mm; font-weight: 700; line-height: 1.25; }
 
-  .burst {
-    flex: none; position: relative; width: 40mm; height: 40mm;
-    transform: rotate(8deg);
-    display: grid; place-items: center; text-align: center;
+  /* QR code : 34 mm de côté, soit ~32 mm utiles hors cadre */
+  .qr { flex: none; width: 50mm; }
+  .scan {
+    font-family: "Gochi Hand", cursive; font-size: 5.2mm; line-height: 1; white-space: nowrap; text-align: center;
+    color: var(--accent); transform: rotate(-3deg); margin-bottom: 2mm;
   }
-  .burst svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .burst p { position: relative; font-size: 4mm; font-weight: 800; line-height: 1.1; }
-  .burst p .cartoon { display: block; font-size: 6mm; color: var(--accent); margin-top: .5mm; }
+  .qr-box {
+    width: 34mm; height: 34mm; margin-left: auto; background: #fff; line-height: 0;
+    border: var(--line) solid var(--ink); border-radius: 3mm;
+    box-shadow: 1.6mm 1.6mm 0 var(--accent); overflow: hidden;
+  }
+  .qr-box svg { width: 100%; height: 100%; display: block; }
 
   /* Languettes détachables */
   .tabs {
@@ -172,16 +176,16 @@
 <div class="page">
   <div class="content">
     <div class="bubble">
-      <h1 class="cartoon">Votre ado<br>utilise déjà l'IA.<br><span class="hl">Autant<br>l'utiliser <span class="u">bien.<svg viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M2 6 Q 15 1 28 5 T 54 5 T 78 4 T 98 5" fill="none" stroke="#111" stroke-linecap="round" vector-effect="non-scaling-stroke" style="stroke-width:1.3mm"/></svg><svg class="shine" viewBox="0 0 20 20"><path d="M4 9 L1 6 M9 5 L9 0 M14 9 L18 6" fill="none" stroke="#111" stroke-linecap="round" style="stroke-width:1.1mm"/></svg></span></span></h1>
+      <h1 class="cartoon">Tout le monde<br>utilise déjà l'IA.<br><span class="hl">Autant<br>l'utiliser <span class="u">bien.<svg viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M2 6 Q 15 1 28 5 T 54 5 T 78 4 T 98 5" fill="none" stroke="#111" stroke-linecap="round" vector-effect="non-scaling-stroke" style="stroke-width:1.3mm"/></svg><svg class="shine" viewBox="0 0 20 20"><path d="M4 9 L1 6 M9 5 L9 0 M14 9 L18 6" fill="none" stroke="#111" stroke-linecap="round" style="stroke-width:1.1mm"/></svg></span></span></h1>
       <svg class="guy guy-title" viewBox="-12 -14 62 88" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(38 0) scale(-1 1)"><use href="#sit"/><path d="M24 32 Q35 35 39 44"/><circle cx="40" cy="45.5" r="2.8" fill="#fff"/><path d="M41 47 L46 54" stroke-width="3.2"/></g></svg>
     </div>
 
-    <p class="sub">Des séances particulières pour lycéens, avec quelqu'un dont c'est le métier.</p>
+    <p class="sub">Des séances particulières pour collégiens et lycéens, avec quelqu'un dont c'est le métier.</p>
 
     <div class="infos">
-      <div class="sticker">Lycéens de [NIVEAUX]</div>
+      <div class="sticker"><span>De la 6<sup>e</sup> à la Terminale</span></div>
       <div class="sticker">30 € la séance</div>
-      <div class="sticker">[À DOMICILE / LIEU]</div>
+      <div class="sticker">À domicile ou en visio · Marseille</div>
     </div>
 
     <ul>
@@ -200,9 +204,9 @@
         <p class="who">Alternant en IA dans un grand groupe marseillais</p>
         <p class="phone cartoon">06 09 14 80 90</p>
       </div>
-      <div class="burst">
-        <svg viewBox="0 0 100 100"><polygon points="50.0,1.0 56.9,10.6 66.8,4.0 70.0,15.4 81.5,12.5 80.6,24.3 92.4,25.5 87.6,36.3 98.3,41.5 90.0,50.0 98.3,58.5 87.6,63.7 92.4,74.5 80.6,75.7 81.5,87.5 70.0,84.6 66.8,96.0 56.9,89.4 50.0,99.0 43.1,89.4 33.2,96.0 30.0,84.6 18.5,87.5 19.4,75.7 7.6,74.5 12.4,63.7 1.7,58.5 10.0,50.0 1.7,41.5 12.4,36.3 7.6,25.5 19.4,24.3 18.5,12.5 30.0,15.4 33.2,4.0 43.1,10.6" fill="#fff" stroke="#111" stroke-width="2.6" stroke-linejoin="round"/></svg>
-        <p>1<sup>re</sup> séance<br>découverte<span class="cartoon">[PRIX]</span></p>
+      <div class="qr">
+        <p class="scan">Scanne &amp; pose ta question</p>
+        <div class="qr-box"><svg role="img" aria-label="QR code vers le site" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 41 41" shape-rendering="crispEdges"><rect width="41" height="41" fill="#fff"/><path fill="#111" d="M4 4h7v1h-7zM12 4h3v1h-3zM23 4h3v1h-3zM27 4h1v1h-1zM30 4h7v1h-7zM4 5h1v1h-1zM10 5h1v1h-1zM12 5h2v1h-2zM16 5h1v1h-1zM18 5h1v1h-1zM21 5h1v1h-1zM26 5h3v1h-3zM30 5h1v1h-1zM36 5h1v1h-1zM4 6h1v1h-1zM6 6h3v1h-3zM10 6h1v1h-1zM13 6h1v1h-1zM16 6h5v1h-5zM22 6h3v1h-3zM28 6h1v1h-1zM30 6h1v1h-1zM32 6h3v1h-3zM36 6h1v1h-1zM4 7h1v1h-1zM6 7h3v1h-3zM10 7h1v1h-1zM12 7h4v1h-4zM19 7h1v1h-1zM22 7h1v1h-1zM26 7h1v1h-1zM28 7h1v1h-1zM30 7h1v1h-1zM32 7h3v1h-3zM36 7h1v1h-1zM4 8h1v1h-1zM6 8h3v1h-3zM10 8h1v1h-1zM13 8h1v1h-1zM17 8h1v1h-1zM20 8h1v1h-1zM22 8h1v1h-1zM28 8h1v1h-1zM30 8h1v1h-1zM32 8h3v1h-3zM36 8h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM15 9h2v1h-2zM18 9h3v1h-3zM25 9h2v1h-2zM28 9h1v1h-1zM30 9h1v1h-1zM36 9h1v1h-1zM4 10h7v1h-7zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM26 10h1v1h-1zM28 10h1v1h-1zM30 10h7v1h-7zM12 11h2v1h-2zM16 11h1v1h-1zM18 11h6v1h-6zM27 11h1v1h-1zM4 12h1v1h-1zM6 12h2v1h-2zM9 12h3v1h-3zM13 12h1v1h-1zM15 12h2v1h-2zM18 12h4v1h-4zM25 12h1v1h-1zM27 12h1v1h-1zM30 12h1v1h-1zM33 12h1v1h-1zM35 12h2v1h-2zM4 13h2v1h-2zM8 13h1v1h-1zM11 13h1v1h-1zM13 13h3v1h-3zM17 13h1v1h-1zM20 13h5v1h-5zM27 13h1v1h-1zM30 13h2v1h-2zM33 13h2v1h-2zM36 13h1v1h-1zM4 14h2v1h-2zM7 14h2v1h-2zM10 14h1v1h-1zM12 14h2v1h-2zM15 14h3v1h-3zM20 14h1v1h-1zM22 14h1v1h-1zM25 14h3v1h-3zM30 14h4v1h-4zM35 14h2v1h-2zM6 15h1v1h-1zM16 15h1v1h-1zM21 15h1v1h-1zM26 15h1v1h-1zM28 15h1v1h-1zM31 15h1v1h-1zM33 15h1v1h-1zM36 15h1v1h-1zM9 16h2v1h-2zM15 16h1v1h-1zM18 16h3v1h-3zM24 16h1v1h-1zM28 16h2v1h-2zM31 16h3v1h-3zM35 16h2v1h-2zM4 17h1v1h-1zM9 17h1v1h-1zM11 17h6v1h-6zM18 17h1v1h-1zM24 17h2v1h-2zM28 17h1v1h-1zM31 17h1v1h-1zM34 17h2v1h-2zM10 18h1v1h-1zM12 18h1v1h-1zM21 18h5v1h-5zM30 18h3v1h-3zM4 19h3v1h-3zM9 19h1v1h-1zM11 19h3v1h-3zM19 19h1v1h-1zM22 19h1v1h-1zM25 19h6v1h-6zM32 19h3v1h-3zM7 20h1v1h-1zM10 20h1v1h-1zM14 20h3v1h-3zM18 20h1v1h-1zM20 20h1v1h-1zM22 20h1v1h-1zM25 20h6v1h-6zM32 20h3v1h-3zM5 21h2v1h-2zM9 21h1v1h-1zM14 21h1v1h-1zM16 21h1v1h-1zM19 21h1v1h-1zM24 21h5v1h-5zM30 21h1v1h-1zM32 21h2v1h-2zM35 21h2v1h-2zM5 22h3v1h-3zM9 22h2v1h-2zM12 22h1v1h-1zM14 22h3v1h-3zM19 22h1v1h-1zM22 22h1v1h-1zM24 22h1v1h-1zM26 22h1v1h-1zM28 22h1v1h-1zM30 22h3v1h-3zM34 22h1v1h-1zM5 23h1v1h-1zM11 23h2v1h-2zM15 23h1v1h-1zM18 23h1v1h-1zM21 23h2v1h-2zM24 23h1v1h-1zM26 23h1v1h-1zM29 23h2v1h-2zM32 23h1v1h-1zM35 23h1v1h-1zM4 24h3v1h-3zM8 24h1v1h-1zM10 24h6v1h-6zM17 24h1v1h-1zM19 24h2v1h-2zM23 24h1v1h-1zM26 24h1v1h-1zM33 24h2v1h-2zM36 24h1v1h-1zM4 25h3v1h-3zM12 25h1v1h-1zM14 25h1v1h-1zM16 25h2v1h-2zM19 25h2v1h-2zM24 25h1v1h-1zM27 25h1v1h-1zM29 25h2v1h-2zM36 25h1v1h-1zM6 26h6v1h-6zM14 26h2v1h-2zM18 26h2v1h-2zM22 26h3v1h-3zM27 26h2v1h-2zM30 26h2v1h-2zM35 26h2v1h-2zM5 27h1v1h-1zM7 27h1v1h-1zM9 27h1v1h-1zM12 27h1v1h-1zM15 27h1v1h-1zM18 27h2v1h-2zM22 27h1v1h-1zM24 27h1v1h-1zM28 27h2v1h-2zM31 27h1v1h-1zM33 27h1v1h-1zM36 27h1v1h-1zM4 28h1v1h-1zM10 28h3v1h-3zM14 28h1v1h-1zM17 28h1v1h-1zM21 28h1v1h-1zM23 28h1v1h-1zM26 28h7v1h-7zM35 28h2v1h-2zM12 29h3v1h-3zM17 29h1v1h-1zM19 29h2v1h-2zM23 29h1v1h-1zM25 29h2v1h-2zM28 29h1v1h-1zM32 29h2v1h-2zM4 30h7v1h-7zM12 30h4v1h-4zM20 30h6v1h-6zM27 30h2v1h-2zM30 30h1v1h-1zM32 30h1v1h-1zM4 31h1v1h-1zM10 31h1v1h-1zM12 31h3v1h-3zM19 31h5v1h-5zM27 31h2v1h-2zM32 31h4v1h-4zM4 32h1v1h-1zM6 32h3v1h-3zM10 32h1v1h-1zM14 32h1v1h-1zM16 32h3v1h-3zM20 32h3v1h-3zM26 32h7v1h-7zM34 32h1v1h-1zM4 33h1v1h-1zM6 33h3v1h-3zM10 33h1v1h-1zM12 33h1v1h-1zM15 33h1v1h-1zM18 33h1v1h-1zM20 33h2v1h-2zM23 33h1v1h-1zM26 33h3v1h-3zM31 33h1v1h-1zM35 33h2v1h-2zM4 34h1v1h-1zM6 34h3v1h-3zM10 34h1v1h-1zM12 34h4v1h-4zM17 34h1v1h-1zM19 34h2v1h-2zM22 34h1v1h-1zM24 34h1v1h-1zM27 34h1v1h-1zM30 34h2v1h-2zM33 34h2v1h-2zM4 35h1v1h-1zM10 35h1v1h-1zM14 35h1v1h-1zM21 35h2v1h-2zM24 35h1v1h-1zM26 35h3v1h-3zM30 35h4v1h-4zM36 35h1v1h-1zM4 36h7v1h-7zM12 36h3v1h-3zM21 36h3v1h-3zM25 36h1v1h-1zM30 36h1v1h-1zM32 36h1v1h-1zM34 36h1v1h-1z"/></svg></div>
       </div>
     </div>
   </div>
