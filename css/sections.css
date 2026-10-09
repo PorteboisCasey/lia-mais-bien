@@ -9,7 +9,8 @@ html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
   padding-bottom: 96px; /* hauteur de #stage */
-  background: var(--paper);
+  /* Trame manga : points d'encre légers ; bulles et stickers gardent leur fond papier */
+  background: var(--paper) radial-gradient(rgb(17 17 17 / .14) 1.2px, transparent 1.6px) 0 0 / 12px 12px;
   color: var(--ink);
   font-family: var(--font-body);
   font-size: 1.0625rem;
@@ -37,7 +38,20 @@ main {
 section { padding: 40px 0; scroll-margin-top: 8px; }
 
 /* --- Hero --- */
-#hero { position: relative; padding-top: 28px; }
+#hero { position: relative; isolation: isolate; padding-top: 28px; }
+/* Lignes de vitesse derrière la bulle, effacées au centre et sur les bords */
+#hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 -16px;
+  z-index: -1;
+  background:
+    repeating-conic-gradient(from 4deg at 50% 45%, var(--accent) 0 1.2deg, transparent 1.2deg 41deg),
+    repeating-conic-gradient(at 50% 45%, rgb(17 17 17 / .22) 0 1.2deg, transparent 1.2deg 7deg);
+  -webkit-mask-image: radial-gradient(closest-side at 50% 45%, transparent 35%, #000 60%, transparent 100%);
+  mask-image: radial-gradient(closest-side at 50% 45%, transparent 35%, #000 60%, transparent 100%);
+  pointer-events: none;
+}
 .kicker {
   margin-bottom: 16px;
   font-family: var(--font-hand);
@@ -263,6 +277,7 @@ h1 .hl { color: var(--accent); }
   #stage { display: none; }
   main { padding-inline: 24px; }
   #hero { padding-top: 120px; } /* place pour Casey assis au-dessus de la bulle */
+  #hero::before { inset: 0 -120px; }
   #casey { width: 72px; }
   #wa-float { right: 28px; bottom: 28px; }
   .stickers { gap: 22px; }
