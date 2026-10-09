@@ -1,0 +1,131 @@
+/* Variables et composants de l'affiche (affiche/affiche.html), traduits en unités web.
+   Les polices sont chargées par <link> dans index.html (display=swap). */
+:root {
+  --ink: #111;
+  --accent: #FF4D00;
+  --paper: #fff;
+  --line: 3px;
+  --radius: 14px;
+  --shadow: 4px 4px 0 var(--ink);
+  --tap: 44px;
+
+  --font-display: "Lilita One", "Arial Rounded MT Bold", sans-serif;
+  --font-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-hand: "Gochi Hand", cursive;
+}
+
+/* Bulle de BD (cadre du titre) */
+.bubble {
+  position: relative;
+  border: calc(var(--line) * 1.5) solid var(--ink);
+  border-radius: 28px;
+  padding: 20px 22px 26px;
+  background: var(--paper);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+/* Autocollant incliné ; l'inclinaison vient de --tilt pour que la chorégraphie la retrouve */
+.sticker {
+  --tilt: 0deg;
+  display: grid;
+  place-items: center;
+  min-height: var(--tap);
+  padding: 12px 14px;
+  border: var(--line) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+  transform: rotate(var(--tilt));
+}
+
+/* Pastille du numéro */
+.phone {
+  display: inline-block;
+  min-height: var(--tap);
+  padding: 6px 20px 4px;
+  border: calc(var(--line) * 1.2) solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: 5px 5px 0 var(--accent);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 7vw, 2.2rem);
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Case à cocher des promesses : la coche (.check path) est tracée par la chorégraphie */
+.check {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  overflow: visible;
+}
+
+/* Bouton-sticker : un radio caché, le label fait le bouton */
+.btn-sticker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  padding: 8px 20px;
+  border: var(--line) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  font-weight: 800;
+  cursor: pointer;
+  user-select: none;
+  transition: transform .12s, box-shadow .12s, background-color .12s;
+}
+.btn-sticker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.btn-sticker:has(input:checked) {
+  background: var(--accent);
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+/* L'état coché ne repose pas que sur la couleur */
+.btn-sticker:has(input:checked)::before {
+  content: "✓";
+  margin-right: 8px;
+}
+.btn-sticker:has(input:focus-visible) {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* Bouton d'envoi */
+.btn-submit {
+  min-height: 56px;
+  padding: 10px 24px;
+  border: var(--line) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--accent);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  cursor: pointer;
+  transition: transform .12s, box-shadow .12s;
+}
+.btn-submit:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+}

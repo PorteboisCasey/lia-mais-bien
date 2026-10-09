@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Tests de contrat C2 + C3</title>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script defer src="../js/casey.js"></script>
+<script defer src="../js/contact.js"></script>
+</head>
+<body>
+<div id="host"></div>
+<pre id="result"></pre>
+<script>
+window.addEventListener('load', async function () {
+  var fails = [];
+  function ok(cond, msg) { if (!cond) fails.push(msg); }
+
+  // --- C2 : Casey ---
+  var C = window.Casey;
+  ok(C, 'window.Casey absent');
+  if (C) {
+    ['mount', 'pose', 'walk', 'face', 'celebrate'].forEach(function (m) {
+      ok(typeof C[m] === 'function', 'Casey.' + m + ' manquant');
+    });
+    ok(JSON.stringify(C.POSES) === JSON.stringify(['sit','idle','walk','point','wave','think','phone','party']),
+      'Casey.POSES incorrect : ' + JSON.stringify(C.POSES));
+
+    var host = document.getElementById('host');
+    var svg = C.mount(host);
+    ok(svg && svg.tagName.toLowerCase() === 'svg' && svg.classList.contains('casey'), 'mount ne retourne pas un svg.casey');
+    ['head','torso','armL','armR','legL','legR','laptop','phone'].forEach(function (p) {
+      ok(host.querySelector('g[data-part="' + p + '"]'), 'data-part manquant : ' + p);
+    });
+    var svg2 = C.mount(host);
+    ok(host.querySelectorAll('svg.casey').length === 1, 'mount non idempotent');
+    ok(svg2 === svg, 'mount idempotent doit retourner le même svg');
+
+    var origWarn = console.warn; var warned = 0;
+    console.warn = function () { warned++; };
+    var threw = false, resolved = false;
+    try {
+      await Promise.race([
+        C.pose('inconnu').then(function () { resolved = true; }),
+        new Promise(function (r) { setTimeout(r, 2000); })
+      ]);
+    } catch (e) { threw = true; }
+    console.warn = origWarn;
+    ok(!threw, "pose('inconnu') a levé une exception");
+    ok(resolved, "la Promise de pose('inconnu') ne s'est pas résolue");
+    ok(warned >= 1, "pose('inconnu') doit appeler console.warn");
+
+    await C.pose('idle', { duration: 0 });
+    ok(host.querySelector('svg.casey').getAttribute('data-pose') === 'idle', 'data-pose devrait valoir idle');
+  }
+
+  // --- C3 : Contact ---
+  var T = window.Contact;
+  ok(T, 'window.Contact absent');
+  if (T) {
+    ok(T.NUMBER === '33609148090', 'Contact.NUMBER incorrect');
+    ['buildMessage', 'buildUrl', 'init'].forEach(function (m) {
+      ok(typeof T[m] === 'function', 'Contact.' + m + ' manquant');
+    });
+    ok(T.buildUrl('a b') === 'https://wa.me/33609148090?text=a%20b', 'buildUrl incorrect');
+    ok(T.buildMessage({ role: null, level: null, question: ' x ' }) === 'Bonjour Casey !\nx\n(envoyé depuis le site)',
+      'buildMessage incorrect');
+  }
+
+  document.getElementById('result').textContent = fails.length ? fails.join('\n') : 'OK';
+});
+</script>
+</body>
+</html>

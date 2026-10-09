@@ -1,0 +1,59 @@
+{
+  "number": "33609148090",
+  "cases": [
+    {
+      "name": "élève + collège",
+      "input": { "role": "eleve", "level": "college", "question": "Comment réviser avec l'IA ?" },
+      "message": "Bonjour Casey ! Élève · Collège\nComment réviser avec l'IA ?\n(envoyé depuis le site)"
+    },
+    {
+      "name": "élève + lycée",
+      "input": { "role": "eleve", "level": "lycee", "question": "C'est quoi un prompt ?" },
+      "message": "Bonjour Casey ! Élève · Lycée\nC'est quoi un prompt ?\n(envoyé depuis le site)"
+    },
+    {
+      "name": "parent + collège",
+      "input": { "role": "parent", "level": "college", "question": "Mon fils est en 4e." },
+      "message": "Bonjour Casey ! Parent · Collège\nMon fils est en 4e.\n(envoyé depuis le site)"
+    },
+    {
+      "name": "parent + lycée",
+      "input": { "role": "parent", "level": "lycee", "question": "Ma fille passe le bac." },
+      "message": "Bonjour Casey ! Parent · Lycée\nMa fille passe le bac.\n(envoyé depuis le site)"
+    },
+    {
+      "name": "rôle seul",
+      "input": { "role": "parent", "level": null, "question": "Bonjour" },
+      "message": "Bonjour Casey ! Parent\nBonjour\n(envoyé depuis le site)"
+    },
+    {
+      "name": "niveau seul",
+      "input": { "role": null, "level": "lycee", "question": "Bonjour" },
+      "message": "Bonjour Casey ! Lycée\nBonjour\n(envoyé depuis le site)"
+    },
+    {
+      "name": "aucun choix",
+      "input": { "role": null, "level": null, "question": "Une question" },
+      "message": "Bonjour Casey !\nUne question\n(envoyé depuis le site)"
+    },
+    {
+      "name": "caractères spéciaux",
+      "input": {
+        "role": "eleve",
+        "level": "lycee",
+        "question": "Éléphant à l'été & #1 ? 1+1=2 😀\nDeuxième ligne"
+      },
+      "message": "Bonjour Casey ! Élève · Lycée\nÉléphant à l'été & #1 ? 1+1=2 😀\nDeuxième ligne\n(envoyé depuis le site)"
+    },
+    {
+      "name": "espaces autour de la question",
+      "input": { "role": "eleve", "level": "college", "question": "   \n  Salut  \n " },
+      "message": "Bonjour Casey ! Élève · Collège\nSalut\n(envoyé depuis le site)"
+    },
+    {
+      "name": "question vide",
+      "input": { "role": "eleve", "level": "college", "question": "" },
+      "message": "Bonjour Casey ! Élève · Collège\n\n(envoyé depuis le site)"
+    }
+  ]
+}
