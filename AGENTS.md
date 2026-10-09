@@ -264,3 +264,15 @@ Modif bornée, faite par l'orchestrateur sur `feat/casey-progression` (pas d'age
 - **`#stage` sur desktop** : visible, 96 px. `#casey` y fait 60 px de large (87 px de haut). `body` garde `padding-bottom: 96px`.
 - **Bulle de pensée** (`#casey-bubble`) : une phrase par section (`Choreo.thoughtFor(id)`), affichée en entrant dans la section, environ 3 s, une seule fois par visite. Elle suit Casey du côté où il reste le plus de place, dans la bande, hors de la zone du bouton. Elle est décorative (`aria-hidden`), et cachée sans JS. En reduced-motion, elle apparaît sans rebond.
 - **Tests** : `tests/choreo/choreo.test.html` vérifie la progression, la bande et les bulles. Le budget de temps virtuel de `tests/lib.sh` passe à 20 s pour attendre l'effacement des bulles.
+
+---
+
+# Casey look (piste C, 2026-10-09)
+
+Casey passe du style de l'affiche (tout orange, tête blanche carrée) à un personnage « illustration jeunesse » cohérent avec les décors. Le cadre ne change pas (viewBox `-12 -14 62 90`, pieds à y ≈ 74), ni l'API C2. Les `data-part` restent les mêmes.
+
+- **Couleurs ajoutées** (constantes en tête du SVG de `js/casey.js`) : peau `#f9d5b8`, sweat `#a8c8e8` (col `#cfe0f2`), jean `#3d4a7a`, verres `#eef5fb`, joues `#f6b8c8`, langue `#ee8fa8`, coque de tablette `#c9bfe8`. L'orange `#FF4D00` reste sur la casquette, les cordons, les semelles et l'écran du téléphone.
+- **Membres cernés** : jambes et manches sont un trait noir épais doublé d'un trait de couleur (`limb()`), comme les pieds de chaise des décors.
+- **Nouvelles clés de visage** (dans `BASE`/`PARTS`, ciblées par classe, pas par `data-part`) : `dot` (`.eyes-dot`, yeux ronds) et `happy` (`.eyes-happy`, yeux rieurs, `wave` et `party`) ; `mouthO` (`.mouth-o`, bouche en « o », `think`) ; `brows` (`.brows`, en `y`), `browL`/`browR` (`.browL`/`.browR`, en rotation, sourcil levé dans `think`). Elles s'ajoutent à `smile`/`open`, et `.blink` englobe les deux types d'yeux.
+- **Pivots** : épaules `6.5 32` / `23.5 32`, coudes `2.5 39` / `27.5 39`, yeux `17.75 19.2`, bouche `17.4 26.4`. Les autres sont inchangés.
+- **Casey statique de `#moi`** : dessin inline de la pose `wave` (sans `<use>`), même tracé que `js/casey.js`. Les `<defs>` `#stand`/`#head` ont été retirés de `index.html`. L'affiche (`affiche/`) garde l'ancien Casey.
