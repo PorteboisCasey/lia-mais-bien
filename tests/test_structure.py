@@ -16,6 +16,9 @@ SCRIPTS = [
     "js/contact.js",
     "js/choreo.js",
 ]
+# Mesure d'audience (« Finitions » d'AGENTS.md) : GoatCounter, sans cookies, en async et en dernier.
+COUNTER = "https://gc.zgo.at/count.js"
+COUNTER_ENDPOINT = "https://czs75izi.goatcounter.com/count"
 VOID = {"meta", "link", "br", "img", "input", "hr", "path", "circle", "rect",
         "ellipse", "polygon", "use", "stop", "source"}
 
@@ -157,7 +160,10 @@ class StructureTest(unittest.TestCase):
 
     def test_scripts(self):
         scripts = [n for n in self.find("script") if n.attrs.get("src")]
-        self.assertEqual([s.attrs["src"] for s in scripts], SCRIPTS)
+        self.assertEqual([s.attrs["src"] for s in scripts], SCRIPTS + [COUNTER])
+        counter = scripts.pop()
+        self.assertIn("async", counter.attrs)
+        self.assertEqual(counter.attrs.get("data-goatcounter"), COUNTER_ENDPOINT)
         for s in scripts:
             self.assertIn("defer", s.attrs)
             self.assertTrue(any(a.tag == "head" for a in s.ancestors()), "scripts en <head>")
