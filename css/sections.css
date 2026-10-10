@@ -365,3 +365,22 @@ h1 .hl { color: var(--accent); }
   #wa-float { right: 28px; }
   .stickers { gap: 22px; }
 }
+
+/* --- Appel à l'action du hero et bloc parents --- */
+.cta {
+  display: inline-flex;
+  align-items: center;
+  margin: 24px 16px 0 0;
+  text-decoration: none;
+}
+.parents {
+  margin-top: 28px;
+  padding: 16px 20px;
+  border: var(--line) dashed var(--ink);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+.parents h2 { margin: 0 0 8px; font-size: 1.5rem; }
+.parents ul { margin: 0; padding: 0; list-style: none; }
+.parents li { line-height: 1.35; }
+.parents li + li { margin-top: 8px; }
