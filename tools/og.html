@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Image de partage</title>
+<!-- Source de assets/og.png (1200 × 630) : bash tools/og.sh. Décor du hero + titre + Casey (casey.js, pose wave). -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=Gochi+Hand&family=Lilita+One&display=swap">
+<link rel="stylesheet" href="../css/tokens.css">
+<style>
+  html, body { margin: 0; }
+  body {
+    width: 1200px; height: 630px; overflow: hidden; position: relative;
+    background:
+      url(../assets/decors/hero-haut.svg) top center / auto 200px no-repeat,
+      url(../assets/decors/hero-bas.svg) bottom center / auto 164px no-repeat,
+      var(--decor-hero);
+    font-family: var(--font-body); color: var(--ink);
+  }
+  .bubble {
+    position: absolute; left: 90px; top: 150px; width: 640px;
+    padding: 28px 36px 34px;
+    border: calc(var(--line) * 1.6) solid var(--ink); border-radius: 30px;
+    background: var(--paper); box-shadow: 9px 9px 0 var(--ink);
+  }
+  .kicker { margin: 0 0 10px; font-family: var(--font-hand); font-size: 34px; }
+  h1 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 66px; line-height: 1; }
+  h1 span { color: var(--accent); }
+  .meta { margin: 18px 0 0; font-weight: 800; font-size: 25px; }
+  #casey { position: absolute; left: 830px; top: 228px; width: 250px; } /* pieds sur le trottoir */
+  #casey svg { display: block; width: 100%; height: auto; overflow: visible; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="../js/casey.js"></script>
+</head>
+<body>
+<div class="bubble">
+  <p class="kicker">L'IA, mais bien</p>
+  <h1>Tout le monde utilise déjà l'IA. <span>Autant l'utiliser bien.</span></h1>
+  <p class="meta">Collège et lycée · à domicile à Marseille</p>
+</div>
+<div id="casey"></div>
+<script>Casey.mount(document.getElementById('casey')); Casey.pose('wave', { duration: 0 });</script>
+</body>
+</html>
