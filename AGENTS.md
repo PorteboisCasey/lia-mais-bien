@@ -150,7 +150,7 @@ var Contact = {
 - [ ] Reduced-motion : aucune animation de scroll, Casey est statique. Preuve : test lancé avec `--force-prefers-reduced-motion`.
 - [ ] Le formulaire produit l'URL exacte de C3 (fixtures) et déclenche `celebrate`. Le test réel d'ouverture de WhatsApp est fait **par l'humain**.
 - [ ] `npx -y lighthouse <url> --form-factor=mobile --only-categories=performance,accessibility --chrome-flags=--headless` donne au moins 90 dans chaque catégorie.
-- [ ] `assets/qr.svg` se décode exactement en `SITE_URL`, et le PDF de l'affiche tient sur une seule page A4.
+- [ ] `assets/qr.svg` se décode exactement en `SITE_URL?src=affiche` (depuis « Finitions »), et le PDF de l'affiche tient sur une seule page A4.
 - [ ] Test sur un vrai iPhone (Safari) via l'IP locale, **validé par l'humain**.
 
 ---
@@ -276,3 +276,14 @@ Casey passe du style de l'affiche (tout orange, tête blanche carrée) à un per
 - **Nouvelles clés de visage** (dans `BASE`/`PARTS`, ciblées par classe, pas par `data-part`) : `dot` (`.eyes-dot`, yeux ronds) et `happy` (`.eyes-happy`, yeux rieurs, `wave` et `party`) ; `mouthO` (`.mouth-o`, bouche en « o », `think`) ; `brows` (`.brows`, en `y`), `browL`/`browR` (`.browL`/`.browR`, en rotation, sourcil levé dans `think`). Elles s'ajoutent à `smile`/`open`, et `.blink` englobe les deux types d'yeux.
 - **Pivots** : épaules `6.5 32` / `23.5 32`, coudes `2.5 39` / `27.5 39`, yeux `17.75 19.2`, bouche `17.4 26.4`. Les autres sont inchangés.
 - **Casey statique de `#moi`** : dessin inline de la pose `wave` (sans `<use>`), même tracé que `js/casey.js`. Les `<defs>` `#stand`/`#head` ont été retirés de `index.html`. L'affiche (`affiche/`) garde l'ancien Casey.
+
+---
+
+# Finitions (2026-10-10)
+
+Faites par l'orchestrateur sur `feat/finitions`. Elles amendent les règles ci-dessus.
+
+- **Mesure d'audience** : GoatCounter (`czs75izi`), sans cookies, donc sans bandeau. C'est la seule exception à « Aucune autre lib » : un `<script async>` placé en dernier dans `<head>`, après les scripts `defer` de C1 (testé par `tests/test_structure.py`). Il ne compte pas les visites en local ni en `file://`.
+- **QR de l'affiche** : il pointe vers `SITE_URL?src=affiche`. GoatCounter lit `src` comme source, donc les visites venues du papier apparaissent dans « Top referrers ». Pour le régénérer : `uvx --with qrcode python tools/make_qr.py '<url>' assets/qr.svg`, puis recopier le SVG dans `.qr-box` de l'affiche.
+- **Affiche** : les trois Casey sont exportés de `js/casey.js` (piste C) par `bash tools/casey-static.sh <dossier>`, en poses `sit` (retourné, sur le titre), `wave` (« C'est moi ! ») et `phone` (au-dessus des tickets). PDF : impression Chrome headless (`--print-to-pdf --no-pdf-header-footer`). Vérifier qu'il fait 1 page A4 et que le QR se décode (opencv via `uvx`).
+- **Partage et favicon** : `assets/og.png` (1200 × 630) est généré par `bash tools/og.sh` depuis `tools/og.html`. `assets/favicon.svg` est la pose `idle` recadrée sur la tête. Si Casey change, il faut régénérer les deux.
