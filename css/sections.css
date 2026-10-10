@@ -384,3 +384,7 @@ h1 .hl { color: var(--accent); }
 .parents ul { margin: 0; padding: 0; list-style: none; }
 .parents li { line-height: 1.35; }
 .parents li + li { margin-top: 8px; }
+
+/* --- Pied de page --- */
+.legal { padding: 24px 16px; text-align: center; }
+.legal a { color: var(--ink); font-weight: 700; }
