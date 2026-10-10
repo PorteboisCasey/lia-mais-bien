@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Casey figé</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="../js/casey.js"></script>
+</head>
+<body>
+<pre id="result"></pre>
+<div id="host"></div>
+<script>
+/* Exporte Casey en SVG figé, une pose par entrée, à partir de js/casey.js (même tracé que le site).
+   Sert au favicon, à l'image de partage et à l'affiche. Usage : bash tools/casey-static.sh <dossier>
+   Lancé en reduced-motion : les poses s'appliquent sans transition et sans boucle.
+   Les éléments masqués par la pose sont retirés, les transforms GSAP sont gardés en attributs. */
+var POSES = ['sit', 'idle', 'wave', 'point', 'think', 'phone'];
+var host = document.getElementById('host'), out = {};
+POSES.reduce(function (p, name) {
+  return p.then(function () {
+    host.innerHTML = '';
+    var svg = Casey.mount(host);
+    return Casey.pose(name, { duration: 0 }).then(function () {
+      var copy = svg.cloneNode(true);
+      [].slice.call(copy.querySelectorAll('[style]')).forEach(function (el) {
+        if (/visibility:\s*hidden|opacity:\s*0(?![.\d])/.test(el.getAttribute('style'))) { el.remove(); return; }
+        var t = el.style.transform;
+        el.removeAttribute('style');
+        if (t && t !== 'none') el.setAttribute('style', 'transform:' + t);
+      });
+      copy.removeAttribute('class');
+      copy.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      [].slice.call(copy.querySelectorAll('[class]')).forEach(function (el) { el.removeAttribute('class'); });
+      [copy].concat([].slice.call(copy.querySelectorAll('*'))).forEach(function (el) {
+        [].slice.call(el.attributes).forEach(function (a) { if (a.name.indexOf('data-') === 0) el.removeAttribute(a.name); });
+      });
+      out[name] = copy.outerHTML;
+    });
+  });
+}, Promise.resolve()).then(function () {
+  document.getElementById('result').textContent = JSON.stringify(out);
+});
+</script>
+</body>
+</html>
