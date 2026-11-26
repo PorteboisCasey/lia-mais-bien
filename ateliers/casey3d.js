@@ -246,9 +246,10 @@ const STRIDE = 30; // longueur d'un cycle de marche (deux pas), en unités du mo
 export function mount(slot, { calm = false } = {}) {
   const q = new URLSearchParams(location.search), fixed = parseFloat(q.get('t3d')), frozen = !isNaN(fixed);
   const motion = !calm && document.documentElement.classList.contains('motion');
-  const canvas = document.createElement('canvas');
-  // La toile déborde du slot : place pour le bras levé, l'épi et l'ombre
-  canvas.style.cssText = 'position:absolute;left:-45%;top:-15%;width:190%;height:120%;pointer-events:none;opacity:0;transition:opacity .4s ease';
+  const canvas = document.createElement('canvas'), poster = slot.querySelector(':scope > .poster');
+  // La toile déborde du slot : place pour le bras levé, l'épi et l'ombre. S'il y a une image de départ (même rendu,
+  // même cadrage), la 3D la remplace d'un coup ; sinon elle apparaît en fondu par-dessus le dessin 2D.
+  canvas.style.cssText = 'position:absolute;left:-45%;top:-15%;width:190%;height:120%;pointer-events:none;opacity:0' + (poster ? '' : ';transition:opacity .4s ease');
   if (getComputedStyle(slot).position === 'static') slot.style.position = 'relative';
   slot.appendChild(canvas);
 
@@ -285,6 +286,7 @@ export function mount(slot, { calm = false } = {}) {
     C.shadow.material.opacity = t === 'dark' ? 0 : t === 'orange' ? 0.26 : 0.2;
   }
   readPose(); readSide(); readTheme();
+  Object.assign(cur, JSON.parse(JSON.stringify(tgt))); // pas de transition à l'arrivée : première image = pose demandée
   new MutationObserver(() => { readPose(); readSide(); readTheme(); }).observe(slot, { attributes: true });
   new MutationObserver(readTheme).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   addEventListener('resize', readSide);
@@ -368,7 +370,7 @@ export function mount(slot, { calm = false } = {}) {
     C.brows.forEach((b, i) => { b.position.y = 16.3 + cur.brow * (poseName === 'think' && i === (side > 0 ? 1 : 0) ? 1.6 : 0.7); });
 
     renderer.render(scene, camera);
-    if (!shown) { shown = true; canvas.style.opacity = 1; const s = slot.querySelector('svg'); if (s) s.style.visibility = 'hidden'; slot.classList.add('is-3d'); }
+    if (!shown) { shown = true; canvas.style.opacity = 1; const s = slot.querySelector(':scope > svg, :scope > .poster'); if (s) s.style.visibility = 'hidden'; slot.classList.add('is-3d'); }
     raf = requestAnimationFrame(frame);
   }
   const loop = () => { if (!raf) raf = requestAnimationFrame(frame); };

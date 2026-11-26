@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Casey, image de départ</title>
+<style>
+  /* Rendu figé de la mascotte 3D (pose « wave », de trois quarts vers la gauche, fond clair), sur fond transparent.
+     Sert d'image de départ à la page Ateliers : affichée dès le premier écran, puis remplacée par la 3D à l'identique.
+     Régénérer avec : uvx --with playwright --with pillow python tools/casey-poster.py */
+  html, body { margin: 0; background: transparent; }
+  #slot { position: absolute; left: 220px; top: 120px; width: 459.5px; height: 667px; }
+</style>
+</head>
+<body>
+<div id="slot" data-pose="wave" data-face="left" data-theme="light"></div>
+<script type="module">
+  import { mount } from '../ateliers/casey3d.js';
+  mount(document.getElementById('slot'), { calm: true });
+</script>
+</body>
+</html>

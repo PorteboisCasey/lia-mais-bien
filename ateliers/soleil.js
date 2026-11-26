@@ -85,7 +85,6 @@ body.t-dark #soleil .pw{fill:${OR}}
   body.t-dark .bar .btn-wa{box-shadow:0 0 0 3px #000}
 }
 html.motion #soleil.on .in{animation:so-rise .9s cubic-bezier(.2,1.25,.3,1) both}
-html.motion #casey3d-slot{animation:so-hop .6s .35s cubic-bezier(.2,1.5,.4,1) backwards}
 html.motion #soleil .wv{animation:so-drift 6s ease-in-out infinite alternate}
 html.motion #soleil .pine{animation:so-sway 7s ease-in-out infinite alternate}
 html.motion #soleil .bi{animation:so-sail 9s ease-in-out infinite alternate}
@@ -102,7 +101,6 @@ html.motion #soleil .gw:nth-child(2) .gu{animation-duration:3.4s;animation-delay
 html.motion #soleil .gw:nth-child(3) .gu{animation-duration:2.4s;animation-delay:-.5s}
 html.motion #soleil .fe{animation:so-ferry 13s ease-in-out infinite alternate}
 @keyframes so-rise{from{translate:0 160px;scale:.55;opacity:0}}
-@keyframes so-hop{from{scale:.6;opacity:0}}
 @keyframes so-drift{from{translate:-8px 0}to{translate:8px 0}}
 @keyframes so-sway{from{rotate:-1.3deg}to{rotate:1.5deg}}
 @keyframes so-sail{from{translate:-14px 0;rotate:-2deg}to{translate:14px 0;rotate:2deg}}
@@ -185,19 +183,28 @@ export function run(ctx) {
 <g class="pineP"><g class="pine">${PINE}</g></g>
 </svg><div class="moi">C'est moi&nbsp;!<svg viewBox="0 0 30 30"><path d="M27 3C22 15 14 21 4 22M12 14L4 22L14 26"/></svg></div>`;
   const main = d.querySelector('main');
-  d.body.insertBefore(layer, main);
+  d.body.insertBefore(layer, d.getElementById('casey3d-slot') || main); // sous Casey s'il est déjà dans la page
 
   // Emplacement de Casey : boîte 62/90 dont le bord bas est le sol. index.html y monte la mascotte 3D
   // (elle suit data-pose, et marche d'après data-x) ; le SVG 2D reste en repli tant qu'il n'y a pas de canvas.
-  const slot = d.createElement('div');
-  slot.id = 'casey3d-slot'; slot.dataset.pose = POSES[0]; slot.setAttribute('aria-hidden', 'true');
-  slot.appendChild(avatar(POSES[0], { outline: '#fff', width: 3 }));
-  d.body.insertBefore(slot, main);
+  // Emplacement de Casey : déjà dans la page (index.html, avec l'image de départ, visible dès le premier écran) ou créé ici.
+  let slot = d.getElementById('casey3d-slot');
+  if (!slot) {
+    slot = d.createElement('div'); slot.id = 'casey3d-slot'; slot.dataset.pose = POSES[0]; slot.setAttribute('aria-hidden', 'true');
+    d.body.insertBefore(slot, main);
+  }
+  const flat = p => avatar(p, { outline: '#fff', width: 3 });
+  if (!slot.querySelector(':scope > svg, :scope > .poster')) slot.appendChild(flat(slot.dataset.pose || POSES[0]));
+  // L'image de départ n'est juste que pour « wave » sur fond clair, et seulement si la 3D va prendre le relais
+  const checkPoster = () => {
+    const pst = slot.querySelector(':scope > .poster'), b = d.body.classList;
+    if (pst && !slot.querySelector('canvas') && (ctx.gl === false || slot.dataset.pose !== 'wave' || b.contains('t-dark') || b.contains('t-orange'))) pst.replaceWith(flat(slot.dataset.pose));
+  };
   const setPose = p => {
     if (slot.dataset.pose === p) return;
     slot.dataset.pose = p;
-    const old = slot.querySelector(':scope > svg');
-    if (old && !slot.querySelector('canvas')) old.replaceWith(avatar(p, { outline: '#fff', width: 3 }));
+    const old = slot.querySelector(':scope > svg, :scope > .poster');
+    if (old && !slot.querySelector('canvas')) old.replaceWith(flat(p));
   };
 
   const $ = s => layer.querySelector(s), $$ = s => [...layer.querySelectorAll(s)];
@@ -385,7 +392,7 @@ export function run(ctx) {
     // (propriété translate, pas transform : l'échelle de l'entrée et l'inclinaison du mot restent centrées sur l'élément)
     slot.style.translate = `${f1(cx - cw / 2)}px ${f1(feet - hC)}px`;
     slot.dataset.x = f1(cx + pan);
-    setPose(POSES[Math.min(pi, POSES.length - 1)]);
+    setPose(POSES[Math.min(pi, POSES.length - 1)]); checkPoster();
     // « C'est moi ! » sur la diapo de nuit : à droite de la main qui salue (desktop), au-dessus de la tête (mobile)
     const om = A === B ? +(A === 5) : A === 5 ? clamp(1 - e * 2.4, 0, 1) : B === 5 ? clamp(e * 2.4 - 1.4, 0, 1) : 0;
     moi.style.opacity = om;

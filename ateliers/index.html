@@ -13,6 +13,11 @@
 <meta property="og:description" content="Je vous apprends à vous servir de l'IA. Même si vous partez de zéro.">
 <meta property="og:url" content="https://porteboiscasey.github.io/lia-mais-bien/ateliers/">
 <script>(function(d,q){d.classList.add('js');if(!matchMedia('(prefers-reduced-motion: reduce)').matches||/[?&](anim|t3d)/.test(q))d.classList.add('motion')})(document.documentElement,location.search)</script>
+<!-- Casey dès le premier écran : son image de départ, le décor et la 3D sont téléchargés tout de suite -->
+<link rel="preload" as="image" href="casey-wave.webp" type="image/webp" fetchpriority="high">
+<link rel="modulepreload" href="soleil.js">
+<link rel="modulepreload" href="avatar.js">
+<script>(function(c){if(c.saveData||/(^|-)2g$/.test(c.effectiveType||''))return;var l=document.createElement('link');l.rel='modulepreload';l.href='casey3d.min.js';document.head.appendChild(l)})(navigator.connection||{})</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Polices réduites aux seuls caractères utilisés (paramètre text=) : régénérer avec ateliers/fonts.py si le texte change -->
@@ -39,6 +44,13 @@
   #gl { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 1s ease; }
   html.gl #gl { opacity: 1; }
   main { position: relative; z-index: 1; }
+  /* Casey, posé là où le décor le placera (soleil.js le recale au pixel près) : visible dès le premier écran */
+  #casey3d-slot { position: fixed; left: 0; top: 0; z-index: 0; pointer-events: none; height: 25.5svh; width: calc(25.5svh * 62 / 90); translate: calc(50vw - 12.75svh * 62 / 90) 15svh; }
+  #casey3d-slot .poster { position: absolute; left: -45%; top: -15%; width: 190%; height: 120%; max-width: none; }
+  html:not(.js) #casey3d-slot { display: none; }
+  @media (max-height: 779px) { #casey3d-slot { height: 23.28svh; width: calc(23.28svh * 62 / 90); translate: calc(50vw - 11.64svh * 62 / 90) 13.7svh; } }
+  @media (max-height: 699px) { #casey3d-slot { height: 21.62svh; width: calc(21.62svh * 62 / 90); translate: calc(50vw - 10.81svh * 62 / 90) 12.72svh; } }
+  @media (min-width: 900px) { #casey3d-slot { height: 48vh; width: calc(48vh * 62 / 90); translate: calc(75vw - 24vh * 62 / 90) calc(var(--c-feet, 90.3vh) - 48vh); } }
 
   /* Diapos : la forme 3D occupe le haut (mobile) ou la moitié droite (desktop), le texte l'autre zone */
   .slide { position: relative; min-height: 100svh; display: flex; flex-direction: column; justify-content: flex-end; padding: 46svh 20px 112px; }
@@ -119,6 +131,8 @@
 </head>
 <body>
 
+<div id="casey3d-slot" data-pose="wave" aria-hidden="true"><img class="poster" src="casey-wave.webp" alt="" width="874" height="802" fetchpriority="high"></div>
+
 <main>
   <section class="slide hero" id="top" data-theme="light" data-shape="ring">
     <svg class="fallback" viewBox="0 0 200 200" aria-hidden="true"><path d="M100 22c46 0 80 30 80 76s-34 80-82 80S20 146 20 100 56 24 106 24c30 0 54 14 66 30" fill="none" stroke="#FF4D00" stroke-width="6" stroke-linecap="round"/></svg>
@@ -138,6 +152,9 @@
       </div>
     </div>
   </section>
+  <script>/* Ordi : hauteur des pieds de Casey, même calcul que soleil.js, pour qu'il soit à sa place dès le premier écran */
+    (function (d, W, H) { if (W < 900) return; var b = d.querySelector('#top .txt').getBoundingClientRect().bottom + scrollY;
+      var hz = Math.round(Math.min(Math.max(b + 46, .78 * H), .88 * H)); d.documentElement.style.setProperty('--c-feet', Math.min(hz + .09 * H, H - 34) + 'px'); })(document, innerWidth, innerHeight);</script>
 
 
   <section class="slide step" data-theme="light" data-shape="1">
@@ -218,7 +235,8 @@
 
 <script type="module">
   // Décor « Plein soleil » (SVG, sans librairie) : chargé tout de suite, il pose l'emplacement de Casey.
-  // Casey en 3D (Three.js) : chargé APRÈS la page. Sans WebGL, en économie de données ou en 2G, le dessin 2D reste.
+  // Casey : son image de départ est dans la page ; la 3D (Three.js, casey3d.min.js) la remplace à l'identique dès qu'elle est prête.
+  // Sans WebGL, en économie de données ou en 2G, pas de 3D : l'image, puis le dessin 2D quand il change de pose.
   // « Réduire les animations » : rien ne bouge tout seul, mais Casey marche quand on fait défiler. ?anim force les animations.
   document.documentElement.classList.add('so');
   const c = navigator.connection || {};
@@ -227,12 +245,9 @@
   const calm = !document.documentElement.classList.contains('motion');
   const gl = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
   import('./soleil.js').then(m => {
-    m.run({ slides: [...document.querySelectorAll('.slide')] });
+    m.run({ slides: [...document.querySelectorAll('.slide')], gl });
     const slot = document.getElementById('casey3d-slot');
-    if (!slot || !gl || (slow && !force)) return;
-    const start = () => import('./casey3d.js').then(m => m.mount(slot, { calm })).catch(e => console.warn('casey3d', e));
-    const go = () => ('requestIdleCallback' in window) ? requestIdleCallback(start, { timeout: 1200 }) : setTimeout(start, 300);
-    document.readyState === 'complete' ? go() : addEventListener('load', go, { once: true });
+    if (slot && gl && (force || !slow)) import('./casey3d.min.js').then(m => m.mount(slot, { calm })).catch(e => console.warn('casey3d', e));
   }).catch(e => { document.documentElement.classList.remove('so'); console.warn('décor', e); });
 </script>
 </body>
