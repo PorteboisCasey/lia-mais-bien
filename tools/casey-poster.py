@@ -1,6 +1,7 @@
-"""Génère ateliers/casey-wave.webp : la toile 3D de Casey (tools/casey-poster.html) en image transparente.
+"""Image de départ de Casey : la toile 3D (tools/casey-poster.html) en WebP transparent, intégrée directement dans
+ateliers/index.html (attribut src de <img class="poster">), pour qu'elle s'affiche dès la première image de la page.
 Usage : uvx --with playwright --with pillow python tools/casey-poster.py   (exige Chrome et une connexion pour Three.js)"""
-import functools, http.server, io, pathlib, threading
+import base64, functools, http.server, io, pathlib, re, threading
 from PIL import Image
 from playwright.sync_api import sync_playwright
 
@@ -20,6 +21,11 @@ with sync_playwright() as p:
     browser.close()
 
 image = Image.open(io.BytesIO(png)).convert('RGBA')
-target = root / 'ateliers' / 'casey-wave.webp'
-image.save(target, 'WEBP', quality=82, method=6, alpha_quality=90)
-print(f"✓ {target.relative_to(root)} {image.size[0]}×{image.size[1]}, {target.stat().st_size} octets")
+buf = io.BytesIO(); image.save(buf, 'WEBP', quality=80, method=6, alpha_quality=85)
+uri = 'data:image/webp;base64,' + base64.b64encode(buf.getvalue()).decode()
+page = root / 'ateliers' / 'index.html'
+html, n = re.subn(r'(<img class="poster" src=")[^"]*(")', lambda m: m.group(1) + uri + m.group(2), page.read_text())
+assert n == 1, 'image de départ introuvable dans index.html'
+html = re.sub(r'(<img class="poster" src="[^"]*" alt="" width=")\d+(" height=")\d+', lambda m: f'{m.group(1)}{image.size[0]}{m.group(2)}{image.size[1]}', html)
+page.write_text(html)
+print(f"✓ image de départ {image.size[0]}×{image.size[1]}, {len(buf.getvalue())} octets ({len(uri)} une fois intégrée) → {page.relative_to(root)}")
