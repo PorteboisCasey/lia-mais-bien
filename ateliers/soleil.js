@@ -397,7 +397,10 @@ export function run(ctx) {
 
     // Mobile : le décor pâlit dès que le texte remonte dans sa zone
     let o = 1;
-    if (!wide) { const tx = slides[pi].querySelector('.txt'); if (tx && tx.getBoundingClientRect().top < H * (Z - 0.01)) o = 0.12; }
+    if (!wide) { // n'importe quel texte (diapo qui part ou qui arrive) qui chevauche la zone du décor
+      const zb = H * (Z - 0.01);
+      for (const sl of new Set([slides[A], slides[B]])) { const r = sl.querySelector('.txt').getBoundingClientRect(); if (r.top < zb && r.bottom > 0) o = 0.12; }
+    }
     layer.style.setProperty('--o', o); slot.style.opacity = o;
 
     // Desktop : le texte qui défile passe DERRIÈRE la promenade (il est coupé sous la ligne des pieds),

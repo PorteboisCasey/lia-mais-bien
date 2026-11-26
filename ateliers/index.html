@@ -16,8 +16,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Polices réduites aux seuls caractères utilisés (paramètre text=) : régénérer avec ateliers/fonts.py si le texte change -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Caveat+Brush&amp;display=swap&amp;text=%20%21%27%2C-.%2F0123456789ACDEILMNOPQRSTUVYZacdefhijlmnopqrstuvz%C2%A0%C3%89%C3%8A%C3%A7%C3%A9" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Caveat+Brush&amp;display=swap&amp;text=%20%21%27%2C-.%2F0123456789ACDEILMNOPQRSTUVYZacdefhijlmnopqrstuvz%C2%A0%C3%89%C3%8A%C3%A7%C3%A9"></noscript>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Caveat+Brush&amp;display=swap&amp;text=%20%21%27-.0123456789ACEILMOPQSTUVYacdefhijlmnopqrstuvz%C2%A0%C3%89%C3%A7%C3%A9" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Caveat+Brush&amp;display=swap&amp;text=%20%21%27-.0123456789ACEILMOPQSTUVYacdefhijlmnopqrstuvz%C2%A0%C3%89%C3%A7%C3%A9"></noscript>
 <style>
   :root {
     --ink: #000; --paper: #fff; --or: #FF4D00; --wa: #25D366;
@@ -74,17 +74,6 @@
   .btn-wa:hover { background: #222; transform: translateY(-2px); }
   .tel { font-weight: 700; text-decoration: none; border-bottom: 2px solid var(--or); padding-bottom: 1px; }
 
-  /* Bandes de scotch */
-  .tapes { position: relative; height: 150px; margin-top: -34px; overflow: hidden; z-index: 2; pointer-events: none; }
-  .tape { position: absolute; left: -6%; width: 112%; white-space: nowrap; overflow: hidden; font-family: var(--display); font-size: clamp(24px, 4.2vw, 44px); line-height: 1; padding: 12px 0 10px; }
-  .tape.o { background: var(--or); color: var(--ink); transform: rotate(-3deg); top: 18px; z-index: 2; }
-  .tape.k { background: var(--ink); color: #fff; transform: rotate(2.4deg); top: 74px; }
-  .run { display: inline-flex; will-change: transform; }
-  .run span { padding-right: .5em; }
-  html.motion .run { animation: run 26s linear infinite; }
-  html.motion .tape.k .run { animation-duration: 32s; animation-direction: reverse; }
-  @keyframes run { to { transform: translateX(-50%); } }
-
   /* Titres et textes des diapos */
   h2 { font-family: var(--display); font-weight: 400; font-size: clamp(54px, 13vw, 128px); line-height: .9; letter-spacing: -.005em; margin-bottom: 26px; }
   .step b { display: block; font-family: var(--display); font-weight: 400; font-size: clamp(38px, 8vw, 72px); line-height: .95; margin-bottom: 12px; }
@@ -119,8 +108,6 @@
     .fallback { left: 75%; top: 50%; width: 320px; }
     .word { font-size: clamp(90px, 10.5vw, 168px); }
     .simple { font-size: clamp(80px, 8.5vw, 132px); }
-    .tapes { height: 220px; margin-top: -60px; }
-    .tape.o { top: 34px; } .tape.k { top: 112px; }
     .who { grid-template-columns: 1fr 1fr; }
     .step h2 { font-size: clamp(54px, 6.4vw, 96px); }
     .bar { left: auto; right: 22px; bottom: 22px; padding: 0; background: none; border: 0; backdrop-filter: none; -webkit-backdrop-filter: none; opacity: 0; pointer-events: none; transform: translateY(10px); transition: opacity .25s ease, transform .25s ease; }
@@ -152,10 +139,6 @@
     </div>
   </section>
 
-  <div class="tapes" aria-hidden="true">
-    <div class="tape o"><div class="run"><span>L'IA, C'EST SIMPLE QUAND ON VOUS MONTRE /</span><span>L'IA, C'EST SIMPLE QUAND ON VOUS MONTRE /</span><span>L'IA, C'EST SIMPLE QUAND ON VOUS MONTRE /</span><span>L'IA, C'EST SIMPLE QUAND ON VOUS MONTRE /</span><span>L'IA, C'EST SIMPLE QUAND ON VOUS MONTRE /</span><span>L'IA, C'EST SIMPLE QUAND ON VOUS MONTRE /</span><span>L'IA, C'EST SIMPLE QUAND ON VOUS MONTRE /</span><span>L'IA, C'EST SIMPLE QUAND ON VOUS MONTRE /</span></div></div>
-    <div class="tape k"><div class="run"><span>MÊME SI VOUS PARTEZ DE ZÉRO /</span><span>MÊME SI VOUS PARTEZ DE ZÉRO /</span><span>MÊME SI VOUS PARTEZ DE ZÉRO /</span><span>MÊME SI VOUS PARTEZ DE ZÉRO /</span><span>MÊME SI VOUS PARTEZ DE ZÉRO /</span><span>MÊME SI VOUS PARTEZ DE ZÉRO /</span><span>MÊME SI VOUS PARTEZ DE ZÉRO /</span><span>MÊME SI VOUS PARTEZ DE ZÉRO /</span><span>MÊME SI VOUS PARTEZ DE ZÉRO /</span><span>MÊME SI VOUS PARTEZ DE ZÉRO /</span></div></div>
-  </div>
 
   <section class="slide step" data-theme="light" data-shape="1">
     <div class="txt">
