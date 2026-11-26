@@ -16,8 +16,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Polices réduites aux seuls caractères utilisés (paramètre text=) : régénérer avec ateliers/fonts.py si le texte change -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Caveat+Brush&amp;display=swap&amp;text=%20%27%2C-.%2F0123456789ACDEILMNOPQRSTUVYZacdefhijlmnopqrstuvz%C3%89%C3%8A%C3%A7%C3%A9" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Caveat+Brush&amp;display=swap&amp;text=%20%27%2C-.%2F0123456789ACDEILMNOPQRSTUVYZacdefhijlmnopqrstuvz%C3%89%C3%8A%C3%A7%C3%A9"></noscript>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Caveat+Brush&amp;display=swap&amp;text=%20%21%27%2C-.%2F0123456789ACDEILMNOPQRSTUVYZacdefhijlmnopqrstuvz%C2%A0%C3%89%C3%8A%C3%A7%C3%A9" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Caveat+Brush&amp;display=swap&amp;text=%20%21%27%2C-.%2F0123456789ACDEILMNOPQRSTUVYZacdefhijlmnopqrstuvz%C2%A0%C3%89%C3%8A%C3%A7%C3%A9"></noscript>
 <style>
   :root {
     --ink: #000; --paper: #fff; --or: #FF4D00; --wa: #25D366;
@@ -50,7 +50,7 @@
   /* Repli sans 3D : cercle et grands chiffres en HTML */
   .fallback { position: absolute; left: 50%; top: 23svh; width: min(56vw, 300px); transform: translate(-50%, -50%); }
   .num { display: block; font-family: var(--display); color: var(--or); font-size: 120px; line-height: .8; margin-bottom: 14px; }
-  html.gl .fallback, html.gl .num { display: none; }
+  html.so .fallback, html.so .num { display: none; } /* le décor porte les chiffres dans son soleil */
 
   /* Hero */
   .lead { font-weight: 800; font-size: clamp(22px, 5.4vw, 40px); letter-spacing: -.01em; line-height: 1; }
@@ -131,7 +131,6 @@
 <script data-goatcounter="https://czs75izi.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </head>
 <body>
-<canvas id="gl" aria-hidden="true"></canvas>
 
 <main>
   <section class="slide hero" id="top" data-theme="light" data-shape="ring">
@@ -235,18 +234,23 @@
 </script>
 
 <script type="module">
-  // 3D chargée APRÈS la page : texte et WhatsApp s'affichent tout de suite.
-  // Pas de 3D si : économie de données, réseau 2G ou pas de WebGL. ?anim force tout (animations comprises).
+  // Décor « Plein soleil » (SVG, sans librairie) : chargé tout de suite, il pose l'emplacement de Casey.
+  // Casey en 3D (Three.js) : chargé APRÈS la page. Sans WebGL, en économie de données ou en 2G, le dessin 2D reste.
+  // « Réduire les animations » : rien ne bouge tout seul, mais Casey marche quand on fait défiler. ?anim force les animations.
+  document.documentElement.classList.add('so');
   const c = navigator.connection || {};
   const slow = c.saveData || /(^|-)2g$/.test(c.effectiveType || '');
-  const q = location.search, force = /[?&](anim|t3d)/.test(q);
-  const calm = !document.documentElement.classList.contains('motion'); // « Réduire les animations » : 3D calme, pilotée par le défilement
+  const force = /[?&](anim|t3d)/.test(location.search);
+  const calm = !document.documentElement.classList.contains('motion');
   const gl = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
-  function start() { import('./world.js').then(m => m.run(document.getElementById('gl'), { calm })).catch(e => console.warn('3D', e)); }
-  if (gl && (force || !slow)) {
+  import('./soleil.js').then(m => {
+    m.run({ slides: [...document.querySelectorAll('.slide')] });
+    const slot = document.getElementById('casey3d-slot');
+    if (!slot || !gl || (slow && !force)) return;
+    const start = () => import('./casey3d.js').then(m => m.mount(slot, { calm })).catch(e => console.warn('casey3d', e));
     const go = () => ('requestIdleCallback' in window) ? requestIdleCallback(start, { timeout: 1200 }) : setTimeout(start, 300);
     document.readyState === 'complete' ? go() : addEventListener('load', go, { once: true });
-  }
+  }).catch(e => { document.documentElement.classList.remove('so'); console.warn('décor', e); });
 </script>
 </body>
 </html>
